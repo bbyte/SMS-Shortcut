@@ -1,6 +1,8 @@
 package com.exclus.simplesms.app;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.LauncherActivity;
 import android.app.PendingIntent;
 import android.content.*;
 import android.database.Cursor;
@@ -13,21 +15,17 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.*;
 
-import java.io.Serializable;
 import java.util.*;
+import java.util.regex.Pattern;
 
 
 public class MainActivity extends Activity {
 
     private ArrayList<Map<String, String>> mPeopleList;
     private SimpleAdapter mAdapter;
-    private AutoCompleteTextView mTxtPhoneNo;
-
+    private AutoCompleteTextView phoneInputBox;
     private List<Map<String, String>> phonesList = new ArrayList<Map<String,String>>();
-
     private SimpleAdapter simpleAdpt;
-
-    private String currentPhone;
 
     SharedPreferences prefs = null;
 
@@ -38,29 +36,28 @@ public class MainActivity extends Activity {
 
         prefs = getSharedPreferences(this.getPackageName(), MODE_PRIVATE);
 
-
         catchShortcut(getIntent());
 
         mPeopleList = new ArrayList<Map<String, String>>();
         PopulatePeopleList();
-        mTxtPhoneNo = (AutoCompleteTextView) findViewById(R.id.phoneInputBox);
+        phoneInputBox = (AutoCompleteTextView) findViewById(R.id.phoneInputBox);
         mAdapter = new SimpleAdapter(this, mPeopleList, R.layout.custcontview,
                 new String[] { "Name", "Phone", "Type" }, new int[] {
                 R.id.ccontName, R.id.ccontNo, R.id.ccontType });
-        mTxtPhoneNo.setAdapter(mAdapter);
+        phoneInputBox.setAdapter(mAdapter);
 
-        mTxtPhoneNo.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        phoneInputBox.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
             @Override
             public void onItemClick(AdapterView<?> av, View arg1, int index,
                                     long arg3) {
                 Map<String, String> map = (Map<String, String>) av.getItemAtPosition(index);
 
-                String name  = map.get("Name");
+                String name = map.get("Name");
                 String number = map.get("Phone");
-                mTxtPhoneNo.setText(""+name+"<"+number+">");
+//                phoneInputBox.setText("" + name + "<" + number + ">");
+                phoneInputBox.setText(number);
 
-                currentPhone = number;
             }
         });
 
@@ -79,6 +76,26 @@ public class MainActivity extends Activity {
                 new int[]{android.R.id.text1});
 
         lv.setAdapter(simpleAdpt);
+
+        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Toast.makeText(getApplicationContext(), "Use long click to delete phone from template", Toast.LENGTH_LONG).show();
+                hideKeyboard();
+            }
+        });
+
+        lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+
+            public boolean onItemLongClick(AdapterView<?> arg0, View arg1, int pos, long id) {
+
+                phonesList.remove(pos);
+                simpleAdpt.notifyDataSetChanged();
+                Toast.makeText(getApplicationContext(), "Removed", Toast.LENGTH_LONG).show();
+
+                return true;
+            }
+        });
     }
 
     public void PopulatePeopleList() {
@@ -131,21 +148,26 @@ public class MainActivity extends Activity {
         people = null;
     }
 
-    public void onItemClick(AdapterView<?> av, View v, int index, long arg){
-        Map<String, String> map = (Map<String, String>) av.getItemAtPosition(index);
-        Iterator<String> myVeryOwnIterator = map.keySet().iterator();
-        while(myVeryOwnIterator.hasNext()) {
-            String key=(String)myVeryOwnIterator.next();
-            String value=(String)map.get(key);
-            mTxtPhoneNo.setText(value);
+    public void addPhoneButtonClicked(View view)
+    {
+
+        if (isEmpty(phoneInputBox) || ! isValidNumber(phoneInputBox.getText().toString())) {
+
+            Toast.makeText(getApplicationContext(), "To field must be a valid number", Toast.LENGTH_LONG).show();
+        } else {
+
+            if (phonesList.contains(createPhone("phone", phoneInputBox.getText().toString()))) {
+
+                Toast.makeText(getApplicationContext(), "Number already added", Toast.LENGTH_LONG).show();
+            } else {
+
+                phonesList.add(createPhone("phone", phoneInputBox.getText().toString()));
+
+                simpleAdpt.notifyDataSetChanged();
+                phoneInputBox.setText("");
+                hideKeyboard();
+            }
         }
-    }
-
-    public void addPhone(View view) {
-
-        phonesList.add(createPhone("phone", currentPhone));
-
-        simpleAdpt.notifyDataSetChanged();
     }
 
     private HashMap<String, String> createPhone(String key, String name) {
@@ -172,13 +194,16 @@ public class MainActivity extends Activity {
     {
         Set<String> lPhonesList;
 
-        if (in.hasExtra("message")) {
+        if (in.hasExtra("message") && in.hasExtra("templateName")) {
 
             String message = in.getStringExtra("message");
+            String templateName = in.getStringExtra("templateName");
 
-            lPhonesList = prefs.getStringSet(message, new HashSet<String>());
+            lPhonesList = prefs.getStringSet(templateName, new HashSet<String>());
 
             for (String phone : lPhonesList) {
+
+                Log.e("catchShortcut", phone);
 
                 SmsManager smsMgr = SmsManager.getDefault();
 
@@ -204,14 +229,22 @@ public class MainActivity extends Activity {
     }
 
 
-    public void saveSMSTemplate(View view)
+    public void saveSMSTemplateClicked(View view)
     {
-        EditText templateName = (EditText) findViewById(R.id.smsMessage);
+        EditText templateName = (EditText) findViewById(R.id.templateName);
+        EditText smsMessage = (EditText) findViewById(R.id.smsMessage);
+
+        if (isEmpty(templateName) || isEmpty(smsMessage) || phonesList.isEmpty()) {
+
+            Toast.makeText(getApplicationContext(), "All fields have to be filled", Toast.LENGTH_LONG).show();
+            hideKeyboard();
+
+            return;
+        }
 
         //Adding shortcut for MainActivity
         //on Home screen
-        Intent shortcutIntent = new Intent(getApplicationContext(),
-                MainActivity.class);
+        Intent shortcutIntent = new Intent(getApplicationContext(), MainActivity.class);
 
         Set lPhonesList = new HashSet();
 
@@ -225,7 +258,8 @@ public class MainActivity extends Activity {
 
         Log.e("Phones", lPhonesList.toString());
 
-        shortcutIntent.putExtra("message", templateName.getText().toString());
+        shortcutIntent.putExtra("message", smsMessage.getText().toString());
+        shortcutIntent.putExtra("templateName", templateName.getText().toString());
         shortcutIntent.setAction(Intent.ACTION_MAIN);
 
         Intent addIntent = new Intent();
@@ -239,14 +273,29 @@ public class MainActivity extends Activity {
         addIntent
                 .setAction("com.android.launcher.action.INSTALL_SHORTCUT");
         getApplicationContext().sendBroadcast(addIntent);
+
+        Toast.makeText(getApplicationContext(), "Template '" + templateName.getText().toString() + "' saved on home screen",
+                Toast.LENGTH_LONG).show();
+
+        templateName.setText("");
+        smsMessage.setText("");
+        phonesList.clear();
+        simpleAdpt.notifyDataSetChanged();
+        hideKeyboard();
     }
 
     @Override
-    public boolean onTouchEvent(MotionEvent event) {
+    public boolean onTouchEvent(MotionEvent event)
+    {
+        hideKeyboard();
+        return true;
+    }
+
+    private void hideKeyboard()
+    {
         InputMethodManager imm = (InputMethodManager)getSystemService(Context.
                 INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
-        return true;
     }
 
     //---sends an SMS message to another device---
@@ -310,6 +359,19 @@ public class MainActivity extends Activity {
         }, new IntentFilter(DELIVERED));
 
         SmsManager sms = SmsManager.getDefault();
+
         sms.sendTextMessage(phoneNumber, null, message, sentPI, deliveredPI);
     }
+
+    private boolean isEmpty(EditText etText) {
+        return etText.getText().toString().trim().length() == 0;
+    }
+
+    private boolean isValidNumber(String number) {
+
+        Pattern sPattern = Pattern.compile("^[0-9\\s\\+-]+$");
+
+        return sPattern.matcher(number).matches();
+    }
+
 }
