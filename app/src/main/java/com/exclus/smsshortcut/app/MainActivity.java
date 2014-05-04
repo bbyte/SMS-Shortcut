@@ -1,8 +1,6 @@
-package com.exclus.simplesms.app;
+package com.exclus.smsshortcut.app;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.LauncherActivity;
 import android.app.PendingIntent;
 import android.content.*;
 import android.database.Cursor;
@@ -22,7 +20,6 @@ import java.util.regex.Pattern;
 public class MainActivity extends Activity {
 
     private ArrayList<Map<String, String>> mPeopleList;
-    private SimpleAdapter mAdapter;
     private AutoCompleteTextView phoneInputBox;
     private List<Map<String, String>> phonesList = new ArrayList<Map<String,String>>();
     private SimpleAdapter simpleAdpt;
@@ -41,9 +38,10 @@ public class MainActivity extends Activity {
         mPeopleList = new ArrayList<Map<String, String>>();
         PopulatePeopleList();
         phoneInputBox = (AutoCompleteTextView) findViewById(R.id.phoneInputBox);
-        mAdapter = new SimpleAdapter(this, mPeopleList, R.layout.custcontview,
-                new String[] { "Name", "Phone", "Type" }, new int[] {
-                R.id.ccontName, R.id.ccontNo, R.id.ccontType });
+        SimpleAdapter mAdapter = new SimpleAdapter(this, mPeopleList, R.layout.custcontview,
+                new String[]{"Name", "Phone", "Type"}, new int[]{
+                R.id.ccontName, R.id.ccontNo, R.id.ccontType}
+        );
         phoneInputBox.setAdapter(mAdapter);
 
         phoneInputBox.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -260,6 +258,8 @@ public class MainActivity extends Activity {
 
         shortcutIntent.putExtra("message", smsMessage.getText().toString());
         shortcutIntent.putExtra("templateName", templateName.getText().toString());
+        shortcutIntent.putExtra("duplicate", false);
+
         shortcutIntent.setAction(Intent.ACTION_MAIN);
 
         Intent addIntent = new Intent();
@@ -272,6 +272,7 @@ public class MainActivity extends Activity {
 
         addIntent
                 .setAction("com.android.launcher.action.INSTALL_SHORTCUT");
+
         getApplicationContext().sendBroadcast(addIntent);
 
         Toast.makeText(getApplicationContext(), "Template '" + templateName.getText().toString() + "' saved on home screen",

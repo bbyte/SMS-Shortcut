@@ -1,0 +1,76 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:tools="http://schemas.android.com/tools"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:paddingLeft="@dimen/activity_horizontal_margin"
+                android:paddingRight="@dimen/activity_horizontal_margin"
+                android:paddingTop="@dimen/activity_vertical_margin"
+                android:paddingBottom="@dimen/activity_vertical_margin"
+                android:orientation="vertical"
+                android:gravity="top"
+                tools:context="com.exclus.smsshortcut.app.MainActivity">
+
+  <View android:id="@+id/strut"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_centerHorizontal="true"/>
+
+  <AutoCompleteTextView
+      android:id="@+id/phoneInputBox"
+      android:hint="@string/to"
+      android:layout_width="200dp"
+      android:layout_height="50dp"
+      android:layout_toRightOf="@id/strut"
+      android:layout_alignParentLeft="true"
+      android:layout_toLeftOf="@+id/addButton"/>
+
+  <Button
+      android:id="@+id/addButton"
+      android:layout_width="60dp"
+      android:layout_height="wrap_content"
+      android:layout_alignParentRight="true"
+      android:onClick="addPhoneButtonClicked"
+      android:text="@string/add" />
+
+  <TextView
+      android:id="@+id/phonesText"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_below="@id/phoneInputBox"
+      android:text="@string/phones"/>
+
+  <ListView android:id="@+id/phonesListView"
+
+            android:layout_height="300dp"
+            android:layout_below="@id/phonesText"
+            android:longClickable="true"
+            android:layout_width="match_parent"/>
+
+
+  <EditText
+      android:id="@+id/smsMessage"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_below="@id/phonesListView"
+      android:hint="@string/smsMessage"
+      />
+
+  <EditText
+      android:id="@+id/templateName"
+      android:layout_width="200dp"
+      android:layout_height="wrap_content"
+      android:layout_below="@id/smsMessage"
+      android:hint="@string/templateName"
+      />
+
+  <Button
+      android:id="@+id/saveButton"
+      android:layout_width="60dp"
+      android:layout_height="wrap_content"
+      android:layout_toRightOf="@id/templateName"
+      android:layout_below="@id/smsMessage"
+      android:layout_alignParentRight="true"
+      android:onClick="saveSMSTemplateClicked"
+      android:text="@string/save" />
+
+</RelativeLayout>
