@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:orientation="vertical" >
+
+  <TextView
+      android:id="@+id/ccontName"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:text="Large Text"
+      android:textAppearance="?android:attr/textAppearanceLarge"
+      android:textColor="#A5000000" />
+
+  <TextView
+      android:id="@+id/ccontNo"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_alignParentLeft="true"
+      android:layout_below="@id/ccontName"
+      android:text="Medium Text"
+      android:textAppearance="?android:attr/textAppearanceMedium"
+      android:textColor="#A5000000" />
+
+  <TextView
+      android:id="@+id/ccontType"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_above="@id/ccontNo"
+      android:layout_alignParentRight="true"
+      android:layout_marginRight="14dp"
+      android:text="Small Text"
+      android:textAppearance="?android:attr/textAppearanceSmall"
+      android:textColor="#A5000000" />
+</LinearLayout>
