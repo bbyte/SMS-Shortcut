@@ -13,26 +13,24 @@
       android:label="@string/app_name"
       android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen" >
 
-    <!-- android:theme="@style/AppTheme" > -->
-
     <activity
         android:name="com.exclus.smsshortcut.app.PreferencesActivity"
         android:windowSoftInputMode="stateHidden|adjustResize"
 
         android:label="@string/app_name"
-        android:launchMode="singleTop" />
+        android:launchMode="singleTop" >
 
-    <intent-filter>
-      <action android:name="android.intent.action.MAIN" />
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
 
-      <category android:name="android.intent.category.LAUNCHER" />
-    </intent-filter>
-  </activity>
-  <activity
-      android:name="com.exclus.smsshortcut.app.MainActivity"
+        <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+    </activity>
+    <activity
+        android:name="com.exclus.smsshortcut.app.MainActivity"
 
-      android:windowSoftInputMode="stateHidden|adjustResize" >
-  </activity>
-</application>
+        android:windowSoftInputMode="stateHidden|adjustResize" >
+    </activity>
+  </application>
 
-    </manifest>
+</manifest>
