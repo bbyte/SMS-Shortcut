@@ -5,31 +5,24 @@
               android:orientation="vertical" >
 
   <TextView
-      android:id="@+id/ccontName"
+      android:id="@+id/contactName"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      android:text="Large Text"
       android:textAppearance="?android:attr/textAppearanceLarge"
       android:textColor="#A5000000" />
 
   <TextView
-      android:id="@+id/ccontNo"
+      android:id="@+id/contactNumber"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      android:layout_alignParentLeft="true"
-      android:layout_below="@id/ccontName"
-      android:text="Medium Text"
       android:textAppearance="?android:attr/textAppearanceMedium"
       android:textColor="#A5000000" />
 
   <TextView
-      android:id="@+id/ccontType"
+      android:id="@+id/contactType"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      android:layout_above="@id/ccontNo"
-      android:layout_alignParentRight="true"
       android:layout_marginRight="14dp"
-      android:text="Small Text"
       android:textAppearance="?android:attr/textAppearanceSmall"
       android:textColor="#A5000000" />
 </LinearLayout>
