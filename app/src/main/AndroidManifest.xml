@@ -14,7 +14,7 @@
       android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen" >
 
     <activity
-        android:name="com.exclus.smsshortcut.app.PreferencesActivity"
+        android:name=".MainActivity"
         android:windowSoftInputMode="stateHidden|adjustResize"
 
         android:label="@string/app_name"
@@ -27,8 +27,7 @@
       </intent-filter>
     </activity>
     <activity
-        android:name="com.exclus.smsshortcut.app.MainActivity"
-
+        android:name=".AddActivity"
         android:windowSoftInputMode="stateHidden|adjustResize" >
     </activity>
   </application>
