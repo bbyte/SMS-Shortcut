@@ -1,6 +1,7 @@
 package com.exclus.smsshortcut.app;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.PendingIntent;
 import android.content.*;
 import android.os.Bundle;
@@ -9,11 +10,9 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Toast;
+import android.widget.*;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class MainActivity extends Activity {
 
@@ -24,18 +23,65 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_preferences);
+        setContentView(R.layout.activity_main);
+
+        new getContacts(this).execute();
 
 //        mPeopleList = new ArrayList<Map<String, String>>();
 
 
-
         prefs = getSharedPreferences(this.getPackageName(), MODE_PRIVATE);
+
+        Map<String, ?> templatesList = prefs.getAll();
+
+
+        ListView templatesListView = (ListView) findViewById(R.id.templatesListView);
+
+        List<Map<String, String>> templatesNames = new ArrayList<Map<String, String>>();
+
+        for (Map.Entry<String, ?> templateEntry : templatesList.entrySet()) {
+
+            HashMap<String, String> tmp = new HashMap<String, String>();
+            tmp.put("name", templateEntry.getKey());
+            templatesNames.add(tmp);
+        }
+
+        CheckBox confirmation = (CheckBox) findViewById(R.id.confirmationCheckbox);
+
+        if (prefs.getBoolean("confirmation", true)) {
+
+            confirmation.setChecked(true);
+        } else {
+
+            confirmation.setChecked(false);
+        }
 
         catchShortcut(getIntent());
 
+        SimpleAdapter templatesListAdapter = new SimpleAdapter(this, templatesNames, android.R.layout.simple_list_item_1, new String[]{"name"}, new int[]{android.R.id.text1});
+        templatesListView.setAdapter(templatesListAdapter);
 
-        new getContacts(this).execute();
+        templatesListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                new AlertDialog.Builder(MainActivity.this)
+                        .setTitle("Delete entry")
+                        .setMessage("Are you sure you want to delete this entry?")
+                        .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                // continue with delete
+                            }
+                        })
+                        .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                // do nothing
+                            }
+                        })
+                        .setIcon(android.R.drawable.ic_dialog_alert)
+                        .show();
+            }
+        });
+
     }
 
     @Override
@@ -50,40 +96,74 @@ public class MainActivity extends Activity {
 
     private void catchShortcut(Intent in)
     {
-        Set<String> lPhonesList;
+        final Set<String> lPhonesList;
 
         if (in.hasExtra("message") && in.hasExtra("templateName")) {
 
-            String message = in.getStringExtra("message");
+
+            final String message = in.getStringExtra("message");
             String templateName = in.getStringExtra("templateName");
 
             lPhonesList = prefs.getStringSet(templateName, new HashSet<String>());
 
-            for (String phone : lPhonesList) {
+            prefs = getSharedPreferences(this.getPackageName(), MODE_PRIVATE);
 
-                Log.e("catchShortcut", phone);
+            if (prefs.getBoolean("confirmation", true)) {
 
-                SmsManager smsMgr = SmsManager.getDefault();
+                new AlertDialog.Builder(MainActivity.this)
+                        .setTitle(message)
+                        .setMessage(lPhonesList.toString())
+                        .setPositiveButton("Send", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                // continue with delete
 
-                ArrayList<String> parts = smsMgr.divideMessage(message);
+                                for (String phone : lPhonesList) {
 
-//                smsMgr.sendMultipartTextMessage(phone, null, parts, null,null);
+                                    sendSMS(phone, message);
+                                }
 
-//                smsMgr.sendTextMessage(phone, null, in.getStringExtra("message"), null, null);
 
-                sendSMS(phone, message);
+                                Toast.makeText(getApplicationContext(), "Sending \"" + message + "\" to " + lPhonesList.toString(),
+                                        Toast.LENGTH_LONG).show();
+
+                                exitFromApp();
+
+                            }
+                        })
+                        .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                // do nothing
+
+                                Toast.makeText(getApplicationContext(), "SMS canceled", Toast.LENGTH_LONG).show();
+                                exitFromApp();
+                            }
+                        })
+                        .setIcon(android.R.drawable.ic_dialog_alert)
+                        .show();
+
+            } else {
+
+
+                for (String phone : lPhonesList) {
+
+                    sendSMS(phone, message);
+                }
+
+
+                Toast.makeText(getApplicationContext(), "Sending \"" + message + "\" to " + lPhonesList.toString(),
+                        Toast.LENGTH_LONG).show();
+
+                exitFromApp();
             }
-
-            Toast.makeText(getApplicationContext(), "Sending \"" + message + "\" to " + lPhonesList.toString(),
-                    Toast.LENGTH_LONG).show();
-
-
-            // exit from app, but w/o killing it
-            Intent homeIntent = new Intent(Intent.ACTION_MAIN);
-            homeIntent.addCategory( Intent.CATEGORY_HOME );
-            homeIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            startActivity(homeIntent);
         }
+    }
+
+    private void exitFromApp() {
+        // exit from app, but w/o killing it
+        Intent homeIntent = new Intent(Intent.ACTION_MAIN);
+        homeIntent.addCategory( Intent.CATEGORY_HOME );
+        homeIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(homeIntent);
     }
 
     private void sendSMS(String phoneNumber, String message)
@@ -106,11 +186,10 @@ public class MainActivity extends Activity {
                 new Intent(DELIVERED), 0));
 
         // when the SMS has been sent
-        registerReceiver(new BroadcastReceiver(){
+        registerReceiver(new BroadcastReceiver() {
             @Override
             public void onReceive(Context arg0, Intent arg1) {
-                switch (getResultCode())
-                {
+                switch (getResultCode()) {
                     case Activity.RESULT_OK:
                         Toast.makeText(getBaseContext(), "SMS sent", Toast.LENGTH_SHORT).show();
                         break;
@@ -167,7 +246,7 @@ public class MainActivity extends Activity {
     public boolean onCreateOptionsMenu(Menu menu) {
         
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.preferences, menu);
+        getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
 
@@ -187,5 +266,12 @@ public class MainActivity extends Activity {
     {
         Intent addActivityIntent = new Intent(this, AddActivity.class);
         startActivity(addActivityIntent);
+    }
+
+    public void confirmationClicked(View view)
+    {
+        CheckBox checkbox = (CheckBox) view;
+        prefs.edit().putBoolean("confirmation", checkbox.isChecked());
+        prefs.edit().commit();
     }
 }
