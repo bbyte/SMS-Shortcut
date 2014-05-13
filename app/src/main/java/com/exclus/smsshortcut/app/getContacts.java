@@ -1,9 +1,11 @@
 package com.exclus.smsshortcut.app;
 
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.provider.ContactsContract;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -16,7 +18,6 @@ import java.util.Map;
 public class getContacts extends AsyncTask<Void, Void, Void>
 {
     private ArrayList<Map<String, String>> mPeopleList;
-
     private Context context;
 
     public getContacts(Context context)
@@ -25,10 +26,12 @@ public class getContacts extends AsyncTask<Void, Void, Void>
         mPeopleList = new ArrayList<Map<String, String>>();
     }
 
+
     @Override
     protected Void doInBackground(Void... params)
     {
         Log.e("boza", "In background");
+        Global.getInstance().loadingContacts = true;
         mPeopleList.clear();
         Cursor people = context.getContentResolver().query(
                 ContactsContract.Contacts.CONTENT_URI, null, null, null, null);
@@ -80,4 +83,16 @@ public class getContacts extends AsyncTask<Void, Void, Void>
 
         return null;
     }
+
+    @Override
+    protected void onPostExecute(Void result)
+    {
+        Global.getInstance().loadingContacts = false;
+        Log.d("sender", "Broadcasting message");
+        Intent intent = new Intent("loadingContactCompleted");
+        // You can also include some extra data.
+        intent.putExtra("message", "This is my message!");
+        LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+    }
+
 }

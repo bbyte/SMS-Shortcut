@@ -1,8 +1,10 @@
 package com.exclus.smsshortcut.app;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.*;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -13,20 +15,38 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 
-public class AddActivity extends Activity
+public class AddActivity extends Activity implements onTaskCompleted
 {
     private ArrayList<Map<String, String>> mPeopleList;
     private AutoCompleteTextView phoneInputBox;
     private List<Map<String, String>> phonesList = new ArrayList<Map<String,String>>();
     private SimpleAdapter phonesListAdapter;
 
-    SharedPreferences prefs = null;
+    private SharedPreferences prefs = null;
+
+    private ProgressDialog progressDialog;
+
+    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            // Get extra data included in the Intent
+            String message = intent.getStringExtra("message");
+            Log.d("receiver", "Got message: " + message);
+        }
+    };
+
 
     @Override
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add);
+
+        LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
+                new IntentFilter("loadingContactCompleted"));
+
+        if (Global.getInstance().loadingContacts)
+            progressDialog = ProgressDialog.show(AddActivity.this, "", "Loading contacts...");
 
         prefs = getSharedPreferences(this.getPackageName(), MODE_PRIVATE);
 
@@ -196,6 +216,22 @@ public class AddActivity extends Activity
         Pattern sPattern = Pattern.compile("^[0-9\\s\\+\\-\\(\\)]+$");
 
         return sPattern.matcher(number).matches();
+    }
+
+    @Override
+    public void hideProgressDialog()
+    {
+        if (progressDialog.isShowing())
+            progressDialog.dismiss();
+    }
+
+
+    @Override
+    protected void onDestroy() {
+        // Unregister since the activity is about to be closed.
+        // This is somewhat like [[NSNotificationCenter defaultCenter] removeObserver:name:object:]
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
+        super.onDestroy();
     }
 
 }

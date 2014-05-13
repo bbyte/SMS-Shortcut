@@ -16,49 +16,32 @@ import java.util.*;
 
 public class MainActivity extends Activity {
 
-//    private Intent mainActivityIntent;
+    public static final String SMS_CONFIRMATION = "confirmation_settings";
 //    private ArrayList<Map<String, String>> mPeopleList;
     SharedPreferences prefs = null;
+    Map<String, ?> templatesList;
+    ListView templatesListView;
+    List<Map<String, String>> templatesNames;
+    SimpleAdapter templatesListAdapter;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState)
+    {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        templatesListView = (ListView) findViewById(R.id.templatesListView);
+        templatesNames = new ArrayList<Map<String, String>>();
 
         new getContacts(this).execute();
 
 //        mPeopleList = new ArrayList<Map<String, String>>();
 
-
         prefs = getSharedPreferences(this.getPackageName(), MODE_PRIVATE);
 
-        Map<String, ?> templatesList = prefs.getAll();
+        getTemplateNames();
 
-
-        ListView templatesListView = (ListView) findViewById(R.id.templatesListView);
-
-        List<Map<String, String>> templatesNames = new ArrayList<Map<String, String>>();
-
-        for (Map.Entry<String, ?> templateEntry : templatesList.entrySet()) {
-
-            HashMap<String, String> tmp = new HashMap<String, String>();
-            tmp.put("name", templateEntry.getKey());
-            templatesNames.add(tmp);
-        }
-
-        CheckBox confirmation = (CheckBox) findViewById(R.id.confirmationCheckbox);
-
-        if (prefs.getBoolean("confirmation", true)) {
-
-            confirmation.setChecked(true);
-        } else {
-
-            confirmation.setChecked(false);
-        }
-
-        catchShortcut(getIntent());
-
-        SimpleAdapter templatesListAdapter = new SimpleAdapter(this, templatesNames, android.R.layout.simple_list_item_1, new String[]{"name"}, new int[]{android.R.id.text1});
+        templatesListAdapter = new SimpleAdapter(this, templatesNames, android.R.layout.simple_list_item_1, new String[]{"name"}, new int[]{android.R.id.text1});
         templatesListView.setAdapter(templatesListAdapter);
 
         templatesListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -82,6 +65,32 @@ public class MainActivity extends Activity {
             }
         });
 
+        CheckBox confirmation = (CheckBox) findViewById(R.id.confirmationCheckbox);
+
+        if (prefs.getBoolean(SMS_CONFIRMATION, true)) {
+
+            confirmation.setChecked(true);
+        } else {
+
+            confirmation.setChecked(false);
+        }
+
+        catchShortcut(getIntent());
+    }
+
+    private void getTemplateNames()
+    {
+        templatesList = prefs.getAll();
+
+        for (Map.Entry<String, ?> templateEntry : templatesList.entrySet()) {
+
+            if (templateEntry.getKey().contentEquals(SMS_CONFIRMATION))
+                continue;
+
+            HashMap<String, String> tmp = new HashMap<String, String>();
+            tmp.put("name", templateEntry.getKey());
+            templatesNames.add(tmp);
+        }
     }
 
     @Override
@@ -108,7 +117,7 @@ public class MainActivity extends Activity {
 
             prefs = getSharedPreferences(this.getPackageName(), MODE_PRIVATE);
 
-            if (prefs.getBoolean("confirmation", true)) {
+            if (prefs.getBoolean(SMS_CONFIRMATION, true)) {
 
                 new AlertDialog.Builder(MainActivity.this)
                         .setTitle(message)
@@ -140,15 +149,12 @@ public class MainActivity extends Activity {
                         })
                         .setIcon(android.R.drawable.ic_dialog_alert)
                         .show();
-
             } else {
-
 
                 for (String phone : lPhonesList) {
 
                     sendSMS(phone, message);
                 }
-
 
                 Toast.makeText(getApplicationContext(), "Sending \"" + message + "\" to " + lPhonesList.toString(),
                         Toast.LENGTH_LONG).show();
@@ -158,7 +164,8 @@ public class MainActivity extends Activity {
         }
     }
 
-    private void exitFromApp() {
+    private void exitFromApp()
+    {
         // exit from app, but w/o killing it
         Intent homeIntent = new Intent(Intent.ACTION_MAIN);
         homeIntent.addCategory( Intent.CATEGORY_HOME );
@@ -178,7 +185,6 @@ public class MainActivity extends Activity {
 //                new Intent(SENT), 0);
 //        PendingIntent deliveredPI = PendingIntent.getBroadcast(this, 0,
 //                new Intent(DELIVERED), 0);
-
 
         sentPendingIntents.add(PendingIntent.getBroadcast(this, 0,
                 new Intent(SENT), 0));
@@ -243,7 +249,8 @@ public class MainActivity extends Activity {
 
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
+    public boolean onCreateOptionsMenu(Menu menu)
+    {
         
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
@@ -251,7 +258,8 @@ public class MainActivity extends Activity {
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(MenuItem item)
+    {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
@@ -271,7 +279,17 @@ public class MainActivity extends Activity {
     public void confirmationClicked(View view)
     {
         CheckBox checkbox = (CheckBox) view;
-        prefs.edit().putBoolean("confirmation", checkbox.isChecked());
+        prefs.edit().putBoolean(SMS_CONFIRMATION, checkbox.isChecked());
         prefs.edit().commit();
+    }
+
+    @Override
+    public void onRestart()
+    {
+        super.onRestart();
+        Log.e("YEAH", "So resuming?!?");
+
+        getTemplateNames();
+        templatesListAdapter.notifyDataSetChanged();
     }
 }

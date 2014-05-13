@@ -9,6 +9,7 @@ import java.util.Map;
 public class Global
 {
     ArrayList<Map<String, String>> mPeopleList;
+    Boolean loadingContacts = false;
 
     private static class Holder
     {
