@@ -15,12 +15,12 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 
-public class AddActivity extends Activity implements onTaskCompleted
+public class AddActivity extends Activity
 {
     private ArrayList<Map<String, String>> mPeopleList;
     private AutoCompleteTextView phoneInputBox;
     private List<Map<String, String>> phonesList = new ArrayList<Map<String,String>>();
-    private SimpleAdapter phonesListAdapter;
+    private SimpleAdapter phonesListAdapter, phoneInputBoxAdapter;
 
     private SharedPreferences prefs = null;
 
@@ -32,9 +32,21 @@ public class AddActivity extends Activity implements onTaskCompleted
             // Get extra data included in the Intent
             String message = intent.getStringExtra("message");
             Log.d("receiver", "Got message: " + message);
+
+            setAutocompleteAdapter(context);
+
+            hideProgressDialog();
         }
     };
 
+    private void setAutocompleteAdapter(Context context)
+    {
+        phoneInputBoxAdapter = new SimpleAdapter(context, Global.getInstance().mPeopleList, R.layout.autocomplete_item,
+                new String[]{"Name", "Phone", "Type"}, new int[]{
+                R.id.contactName, R.id.contactNumber, R.id.contactType}
+        );
+        phoneInputBox.setAdapter(phoneInputBoxAdapter);
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -50,14 +62,13 @@ public class AddActivity extends Activity implements onTaskCompleted
 
         prefs = getSharedPreferences(this.getPackageName(), MODE_PRIVATE);
 
-        mPeopleList = Global.getInstance().mPeopleList;
 
         phoneInputBox = (AutoCompleteTextView) findViewById(R.id.phoneInputBox);
-        SimpleAdapter mAdapter = new SimpleAdapter(this, mPeopleList, R.layout.autocomplete_item,
-                new String[]{"Name", "Phone", "Type"}, new int[]{
-                R.id.contactName, R.id.contactNumber, R.id.contactType}
-        );
-        phoneInputBox.setAdapter(mAdapter);
+
+        if (! Global.getInstance().loadingContacts) {
+
+            setAutocompleteAdapter(this);
+        }
 
         phoneInputBox.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
@@ -101,13 +112,11 @@ public class AddActivity extends Activity implements onTaskCompleted
         });
     }
 
-
     public void addPhoneButtonClicked(View view)
     {
-
         if (isEmpty(phoneInputBox) || ! isValidNumber(phoneInputBox.getText().toString())) {
 
-            Toast.makeText(getApplicationContext(), "To field must be a valid number", Toast.LENGTH_LONG).show();
+            Toast.makeText(getApplicationContext(), "To field must be a valid phone number", Toast.LENGTH_LONG).show();
         } else {
 
             if (phonesList.contains(createPhone("phone", phoneInputBox.getText().toString()))) {
@@ -204,7 +213,6 @@ public class AddActivity extends Activity implements onTaskCompleted
         imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
     }
 
-
     private boolean isEmpty(EditText etText)
     {
         return etText.getText().toString().trim().length() == 0;
@@ -218,7 +226,6 @@ public class AddActivity extends Activity implements onTaskCompleted
         return sPattern.matcher(number).matches();
     }
 
-    @Override
     public void hideProgressDialog()
     {
         if (progressDialog.isShowing())

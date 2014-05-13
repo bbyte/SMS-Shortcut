@@ -46,16 +46,25 @@ public class MainActivity extends Activity {
 
         templatesListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
                 new AlertDialog.Builder(MainActivity.this)
-                        .setTitle("Delete entry")
-                        .setMessage("Are you sure you want to delete this entry?")
-                        .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                        .setTitle(templatesNames.get(position).get("name"))
+                        .setMessage(templatesNames.get(position).get("phones"))
+                        .setPositiveButton("Delete", new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int which) {
                                 // continue with delete
+
+                                deleteShortCut(templatesNames.get(position).get("name"));
+                                prefs.edit().remove(templatesNames.get(position).get("name")).commit();
+
+                                templatesNames.remove(position);
+                                templatesListAdapter.notifyDataSetChanged();
+
+
+                                Toast.makeText(MainActivity.this, "SMS template was deleted", Toast.LENGTH_LONG).show();
                             }
                         })
-                        .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                        .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int which) {
                                 // do nothing
                             }
@@ -80,6 +89,7 @@ public class MainActivity extends Activity {
 
     private void getTemplateNames()
     {
+        templatesNames.clear();
         templatesList = prefs.getAll();
 
         for (Map.Entry<String, ?> templateEntry : templatesList.entrySet()) {
@@ -89,6 +99,7 @@ public class MainActivity extends Activity {
 
             HashMap<String, String> tmp = new HashMap<String, String>();
             tmp.put("name", templateEntry.getKey());
+            tmp.put("phones", templateEntry.getValue().toString());
             templatesNames.add(tmp);
         }
     }
@@ -287,9 +298,27 @@ public class MainActivity extends Activity {
     public void onRestart()
     {
         super.onRestart();
-        Log.e("YEAH", "So resuming?!?");
 
         getTemplateNames();
         templatesListAdapter.notifyDataSetChanged();
+    }
+
+    private void deleteShortCut(String templateName) {
+
+        Intent shortcutIntent = new Intent(getApplicationContext(), MainActivity.class);
+        shortcutIntent.setAction(Intent.ACTION_MAIN);
+
+        Intent addIntent = new Intent();
+        addIntent
+                .putExtra(Intent.EXTRA_SHORTCUT_INTENT, shortcutIntent);
+        addIntent.putExtra(Intent.EXTRA_SHORTCUT_NAME, templateName);
+        addIntent.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE,
+                Intent.ShortcutIconResource.fromContext(getApplicationContext(),
+                        R.drawable.ic_launcher));
+
+        addIntent
+                .setAction("com.android.launcher.action.UNINSTALL_SHORTCUT");
+
+        getApplicationContext().sendBroadcast(addIntent);
     }
 }
