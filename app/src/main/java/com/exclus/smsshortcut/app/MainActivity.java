@@ -1,10 +1,9 @@
 package com.exclus.smsshortcut.app;
 
-import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.PendingIntent;
+import android.app.*;
 import android.content.*;
 import android.os.Bundle;
+import android.support.v4.app.NotificationCompat;
 import android.telephony.SmsManager;
 import android.util.Log;
 import android.view.Menu;
@@ -18,17 +17,21 @@ public class MainActivity extends Activity {
 
     public static final String SMS_CONFIRMATION = "confirmation_settings";
 //    private ArrayList<Map<String, String>> mPeopleList;
-    SharedPreferences prefs = null;
-    Map<String, ?> templatesList;
-    ListView templatesListView;
-    List<Map<String, String>> templatesNames;
-    SimpleAdapter templatesListAdapter;
+    private SharedPreferences prefs = null;
+    private Map<String, ?> templatesList;
+    private ListView templatesListView;
+    private List<Map<String, String>> templatesNames;
+    private SimpleAdapter templatesListAdapter;
+
+//    private Intent addActivityIntent; // = new Intent(this, AddActivity.class);
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+//        addActivityIntent = new Intent(this, AddActivity.class);
 
         templatesListView = (ListView) findViewById(R.id.templatesListView);
         templatesNames = new ArrayList<Map<String, String>>();
@@ -69,12 +72,14 @@ public class MainActivity extends Activity {
                                 // do nothing
                             }
                         })
-                        .setIcon(android.R.drawable.ic_dialog_alert)
+                        .setIcon(android.R.drawable.ic_dialog_info)
                         .show();
             }
         });
 
         CheckBox confirmation = (CheckBox) findViewById(R.id.confirmationCheckbox);
+
+        Boolean conf = prefs.getBoolean(SMS_CONFIRMATION, true);
 
         if (prefs.getBoolean(SMS_CONFIRMATION, true)) {
 
@@ -85,6 +90,36 @@ public class MainActivity extends Activity {
         }
 
         catchShortcut(getIntent());
+
+        /*
+        NotificationCompat.Builder mBuilder =
+                new NotificationCompat.Builder(this)
+                        .setSmallIcon(android.R.drawable.ic_dialog_info)
+                        .setContentTitle("My notification")
+                        .setContentText("Hello World!");
+// Creates an explicit intent for an Activity in your app
+        Intent resultIntent = new Intent(this, MainActivity.class);
+
+// The stack builder object will contain an artificial back stack for the
+// started Activity.
+// This ensures that navigating backward from the Activity leads out of
+// your application to the Home screen.
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+// Adds the back stack for the Intent (but not the Intent itself)
+        stackBuilder.addParentStack(MainActivity.class);
+// Adds the Intent that starts the Activity to the top of the stack
+        stackBuilder.addNextIntent(resultIntent);
+        PendingIntent resultPendingIntent =
+                stackBuilder.getPendingIntent(
+                        0,
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                );
+        mBuilder.setContentIntent(resultPendingIntent);
+        NotificationManager mNotificationManager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+// mId allows you to update the notification later on.
+        mNotificationManager.notify(100, mBuilder.build());
+        */
     }
 
     private void getTemplateNames()
@@ -290,8 +325,8 @@ public class MainActivity extends Activity {
     public void confirmationClicked(View view)
     {
         CheckBox checkbox = (CheckBox) view;
-        prefs.edit().putBoolean(SMS_CONFIRMATION, checkbox.isChecked());
-        prefs.edit().commit();
+
+        prefs.edit().putBoolean(SMS_CONFIRMATION, checkbox.isChecked()).commit();
     }
 
     @Override
