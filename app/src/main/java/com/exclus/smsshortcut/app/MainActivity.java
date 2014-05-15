@@ -2,14 +2,19 @@ package com.exclus.smsshortcut.app;
 
 import android.app.*;
 import android.content.*;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 import android.telephony.SmsManager;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.*;
+import retrofit.RestAdapter;
+import retrofit.http.GET;
+import retrofit.http.Path;
 
 import java.util.*;
 
@@ -23,13 +28,46 @@ public class MainActivity extends Activity {
     private List<Map<String, String>> templatesNames;
     private SimpleAdapter templatesListAdapter;
 
+
+
 //    private Intent addActivityIntent; // = new Intent(this, AddActivity.class);
+
+
+    private class retrofitTest extends AsyncTask<Void, Void, Void>
+    {
+        private testRepo repos;
+
+        @Override
+        protected Void doInBackground(Void... params)
+        {
+            RestAdapter restAdapter = new RestAdapter.Builder()
+                    .setEndpoint("https://api.github.com")
+                    .build();
+
+            GitHubService service = restAdapter.create(GitHubService.class);
+
+            repos = service.listRepos("stephanenicolas");
+
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void result)
+        {
+            Log.e("NETWORK", repos.name);
+        }
+    }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+
+//        new retrofitTest().execute();
 
 //        addActivityIntent = new Intent(this, AddActivity.class);
 
@@ -316,10 +354,39 @@ public class MainActivity extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
-    public void addPhoneButtonClicked(View view)
+    // Button functions
+
+    public void addTemplateButtonClicked(View view)
     {
         Intent addActivityIntent = new Intent(this, AddActivity.class);
         startActivity(addActivityIntent);
+    }
+
+    public void aboutButtonClicked(View view)
+    {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        // Get the layout inflater
+        LayoutInflater inflater = this.getLayoutInflater();
+
+        // Inflate and set the layout for the dialog
+        // Pass null as the parent view because its going in the dialog layout
+        builder.setView(inflater.inflate(R.layout.dialog_about, null))
+                // Add action buttons
+                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int id) {
+                        // sign in the user ...
+                    }
+                })
+                .create().show();
+    }
+
+    public void helpButtonClicked(View view)
+    {
+    }
+
+    public void reinstallShortcutsButtonClicked(View view)
+    {
     }
 
     public void confirmationClicked(View view)

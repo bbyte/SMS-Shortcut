@@ -9,13 +9,48 @@
                 android:gravity="top"
                 tools:context="com.exclus.smsshortcut.app.MainActivity">
 
+
+  <View android:id="@+id/strut"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_centerHorizontal="true"/>
+  <Button
+      android:id="@+id/helpButton"
+      android:layout_width="10dp"
+      android:layout_height="wrap_content"
+      android:onClick="helpButtonClicked"
+      android:layout_toLeftOf="@id/strut"
+      android:text="Help" android:layout_alignParentBottom="true" android:layout_alignParentLeft="true"
+      style="@style/roundButtonStyle"/>
+
+  <Button
+      android:id="@+id/aboutButton"
+      android:layout_width="10dp"
+      android:layout_height="wrap_content"
+      android:layout_toRightOf="@id/strut"
+      android:onClick="aboutButtonClicked"
+      android:text="About" android:layout_alignParentBottom="true" android:layout_alignParentRight="true"
+      style="@style/roundButtonStyle"/>
+
+  <Button
+      android:id="@+id/reinstallShortcutsButton"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_toLeftOf="@id/strut"
+      android:onClick="reinstallShortcutsButtonClicked"
+      android:layout_above="@id/helpButton"
+      android:text="Reinstall shortcuts" android:layout_alignParentBottom="false" android:layout_alignParentLeft="true"
+      style="@style/roundButtonStyle"/>
+
   <Button
       android:id="@+id/addButton"
-      android:layout_width="match_parent"
+      android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      android:onClick="addPhoneButtonClicked"
-      android:text="@string/add" android:layout_alignParentBottom="true" android:layout_alignParentRight="true"
-      android:layout_alignParentEnd="true"/>
+      android:layout_toRightOf="@id/strut"
+      android:onClick="addTemplateButtonClicked"
+      android:layout_above="@id/aboutButton"
+      android:text="@string/addTemplate" android:layout_alignParentBottom="false" android:layout_alignParentRight="true"
+      style="@style/roundButtonStyle"/>
 
   <CheckBox
       android:id="@+id/confirmationCheckbox"
@@ -26,21 +61,27 @@
       android:layout_above="@id/addButton"
       android:layout_centerHorizontal="true"/>
 
+  <TextView
+      android:id="@+id/listOfTemplatesText"
+      android:text="List of templates:"
+      android:textSize="20sp"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"/>
 
   <RelativeLayout
       android:id="@+id/listViewContainer"
       android:layout_above="@id/confirmationCheckbox"
+      android:layout_below="@id/listOfTemplatesText"
       android:gravity="top"
       android:layout_width="wrap_content"
+      android:background="@drawable/border"
       android:layout_height="match_parent">
 
     <ListView android:id="@+id/templatesListView"
               android:layout_height="wrap_content"
               android:stackFromBottom="false"
               android:longClickable="true"
+              android:layout_margin="10dp"
               android:layout_width="match_parent"/>
   </RelativeLayout>
-
-
-
 </RelativeLayout>

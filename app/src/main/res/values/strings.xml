@@ -9,6 +9,7 @@
     <string name="save">Save</string>
     <string name="to">To....</string>
     <string name="add">Add</string>
+    <string name="addTemplate">Add template</string>
     <string name="templateName">Template name</string>
     <string name="title_activity_preferences">Preferences</string>
     <string name="title_activity_test">TestActivity</string>

@@ -28,8 +28,10 @@
       android:layout_width="60dp"
       android:layout_height="wrap_content"
       android:layout_alignParentRight="true"
-      android:onClick="addPhoneButtonClicked"
-      android:text="@string/add" />
+      android:onClick="addTemplateButtonClicked"
+      android:text="@string/add"
+      style="@style/roundButtonStyle"
+      android:typeface="sans"/>
 
   <TextView
       android:id="@+id/phonesText"
@@ -64,7 +66,7 @@
         android:layout_below="@id/smsMessage"
         android:layout_alignParentLeft="true"
 
-        android:hint="@string/templateName"/>
+        android:hint="@string/templateName" android:layout_toLeftOf="@+id/saveButton"/>
 
     <Button
         android:id="@+id/saveButton"
@@ -73,7 +75,8 @@
         android:layout_below="@id/smsMessage"
         android:layout_alignParentRight="true"
         android:onClick="saveSMSTemplateClicked"
-        android:text="@string/save" />
+        android:text="@string/save"
+        style="@style/roundButtonStyle"/>
   </RelativeLayout>
 
   <RelativeLayout
@@ -81,10 +84,11 @@
       android:layout_below="@id/phonesText"
       android:layout_above="@id/smsContainer"
       android:layout_width="wrap_content"
+      android:background="@drawable/border"
       android:layout_height="wrap_content">
 
     <ListView android:id="@+id/phonesListView"
-
+              android:layout_margin="10dp"
               android:layout_height="wrap_content"
               android:longClickable="true"
               android:layout_width="match_parent"/>

@@ -4,5 +4,12 @@
     <style name="AppTheme" parent="android:Theme.Holo.Light.DarkActionBar">
         <!-- Customize your theme here. -->
     </style>
+  <style name="roundButtonStyle">
+    <item name="android:background">@drawable/roundedbutton</item>
+    <item name="android:textColor">@color/myWhite</item>
+    <item name="android:textSize">18sp</item>
+    <item name="android:layout_margin">2dp</item>
+
+  </style>
 
 </resources>
