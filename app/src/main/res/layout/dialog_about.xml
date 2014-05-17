@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:orientation="vertical"
-              android:background="@color/myGreen1"
+              android:background="@drawable/gradient_lightgreen_to_darkgreen"
               android:layout_width="match_parent"
               android:layout_height="match_parent">
-
 
   <TextView
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
+      android:layout_margin="10dp"
       android:gravity="center_horizontal"
       android:layout_centerHorizontal="true"
       android:textAppearance="?android:attr/textAppearanceLarge"
-      android:background="@color/myGreen"
+      android:background="@drawable/gradient_darkgreen_to_lightgreen"
       android:textColor="@color/myWhite"
       android:text="SMS Shortcut"
       android:id="@+id/headerView" android:layout_gravity="center_horizontal"/>
@@ -26,7 +26,8 @@
       android:layout_below="@id/headerView"
       android:layout_centerHorizontal="true"
       android:textAppearance="?android:attr/textAppearanceLarge"
-      android:text="Written by Nikola Kotarov"
+      android:layout_margin="20dp"
+      android:text="Written\nby\nNikola Kotarov"
       android:id="@+id/text1View" android:layout_gravity="center_horizontal"/>
 
 
@@ -38,8 +39,9 @@
       android:layout_below="@id/text1View"
       android:layout_centerHorizontal="true"
       android:textAppearance="?android:attr/textAppearanceSmall"
-      android:text="www.github.com/bbyte/repos/SMSShortcut"
+      android:layout_margin="20dp"
       android:autoLink="web"
+      android:linksClickable="true"
       android:id="@+id/text2View" android:layout_gravity="center_horizontal"/>
 
 

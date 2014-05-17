@@ -6,6 +6,8 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 import android.telephony.SmsManager;
+import android.text.Html;
+import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -28,10 +30,7 @@ public class MainActivity extends Activity {
     private List<Map<String, String>> templatesNames;
     private SimpleAdapter templatesListAdapter;
 
-
-
 //    private Intent addActivityIntent; // = new Intent(this, AddActivity.class);
-
 
     private class retrofitTest extends AsyncTask<Void, Void, Void>
     {
@@ -47,7 +46,6 @@ public class MainActivity extends Activity {
             GitHubService service = restAdapter.create(GitHubService.class);
 
             repos = service.listRepos("stephanenicolas");
-
 
             return null;
         }
@@ -332,27 +330,27 @@ public class MainActivity extends Activity {
     }
 
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu)
-    {
-        
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item)
-    {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
+//    @Override
+//    public boolean onCreateOptionsMenu(Menu menu)
+//    {
+//
+//        // Inflate the menu; this adds items to the action bar if it is present.
+//        getMenuInflater().inflate(R.menu.main, menu);
+//        return true;
+//    }
+//
+//    @Override
+//    public boolean onOptionsItemSelected(MenuItem item)
+//    {
+//        // Handle action bar item clicks here. The action bar will
+//        // automatically handle clicks on the Home/Up button, so long
+//        // as you specify a parent activity in AndroidManifest.xml.
+//        int id = item.getItemId();
+//        if (id == R.id.action_settings) {
+//            return true;
+//        }
+//        return super.onOptionsItemSelected(item);
+//    }
 
     // Button functions
 
@@ -368,9 +366,16 @@ public class MainActivity extends Activity {
         // Get the layout inflater
         LayoutInflater inflater = this.getLayoutInflater();
 
-        // Inflate and set the layout for the dialog
-        // Pass null as the parent view because its going in the dialog layout
-        builder.setView(inflater.inflate(R.layout.dialog_about, null))
+        View dialogView = inflater.inflate(R.layout.dialog_about, null);
+
+//        ((TextView) dialogView.findViewById(R.id.text2View)).setText(Html.fromHtml("&lt;a href=\"http://www.google.com\">Google&lt;/a>"));
+
+        ((TextView) dialogView.findViewById(R.id.text2View)).setText(Html.fromHtml(getResources().getString(R.string.URL)));
+        ((TextView) dialogView.findViewById(R.id.text2View)).setMovementMethod(LinkMovementMethod.getInstance());
+
+
+
+        builder.setView(dialogView)
                 // Add action buttons
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                     @Override
@@ -379,6 +384,19 @@ public class MainActivity extends Activity {
                     }
                 })
                 .create().show();
+
+
+        // Inflate and set the layout for the dialog
+        // Pass null as the parent view because its going in the dialog layout
+//        builder.setView(inflater.inflate(R.layout.dialog_about, null))
+//                // Add action buttons
+//                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+//                    @Override
+//                    public void onClick(DialogInterface dialog, int id) {
+//                        // sign in the user ...
+//                    }
+//                })
+//                .create().show();
     }
 
     public void helpButtonClicked(View view)
@@ -387,6 +405,13 @@ public class MainActivity extends Activity {
 
     public void reinstallShortcutsButtonClicked(View view)
     {
+
+        for (HashMap<String, String> template : templatesNames) {
+
+            Shortcut shortcut = new Shortcut(getApplicationContext(), template.get("name"));
+
+
+        }
     }
 
     public void confirmationClicked(View view)
@@ -407,20 +432,24 @@ public class MainActivity extends Activity {
 
     private void deleteShortCut(String templateName) {
 
-        Intent shortcutIntent = new Intent(getApplicationContext(), MainActivity.class);
-        shortcutIntent.setAction(Intent.ACTION_MAIN);
 
-        Intent addIntent = new Intent();
-        addIntent
-                .putExtra(Intent.EXTRA_SHORTCUT_INTENT, shortcutIntent);
-        addIntent.putExtra(Intent.EXTRA_SHORTCUT_NAME, templateName);
-        addIntent.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE,
-                Intent.ShortcutIconResource.fromContext(getApplicationContext(),
-                        R.drawable.ic_launcher));
+        Shortcut shortcut = new Shortcut(getApplicationContext(), templateName);
+        shortcut.remove();
 
-        addIntent
-                .setAction("com.android.launcher.action.UNINSTALL_SHORTCUT");
-
-        getApplicationContext().sendBroadcast(addIntent);
+//        Intent shortcutIntent = new Intent(getApplicationContext(), MainActivity.class);
+//        shortcutIntent.setAction(Intent.ACTION_MAIN);
+//
+//        Intent addIntent = new Intent();
+//        addIntent
+//                .putExtra(Intent.EXTRA_SHORTCUT_INTENT, shortcutIntent);
+//        addIntent.putExtra(Intent.EXTRA_SHORTCUT_NAME, templateName);
+//        addIntent.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE,
+//                Intent.ShortcutIconResource.fromContext(getApplicationContext(),
+//                        R.drawable.ic_launcher));
+//
+//        addIntent
+//                .setAction("com.android.launcher.action.UNINSTALL_SHORTCUT");
+//
+//        getApplicationContext().sendBroadcast(addIntent);
     }
 }

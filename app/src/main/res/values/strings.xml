@@ -14,5 +14,6 @@
     <string name="title_activity_preferences">Preferences</string>
     <string name="title_activity_test">TestActivity</string>
     <string name="hello_world">Hello world!</string>
+    <string name="URL"><a href="http://www.google.com">Google111</a></string>
 
 </resources>

@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.*;
 import android.os.Bundle;
+import android.provider.Contacts;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -112,7 +113,7 @@ public class AddActivity extends Activity
         });
     }
 
-    public void addPhoneButtonClicked(View view)
+    public void addTemplateButtonClicked(View view)
     {
         if (isEmpty(phoneInputBox) || ! isValidNumber(phoneInputBox.getText().toString())) {
 
@@ -148,38 +149,68 @@ public class AddActivity extends Activity
 
         //Adding shortcut for AddActivity
         //on Home screen
-        Intent shortcutIntent = new Intent(getApplicationContext(), MainActivity.class);
+//        Intent shortcutIntent = new Intent(getApplicationContext(), MainActivity.class);
+
+        Shortcut shortcut = new Shortcut(getApplicationContext(), templateName.getText().toString());
 
         Set lPhonesList = new HashSet();
+
+        List<SMSPhone> SMSPhones = new ArrayList<SMSPhone>();
 
         for (Map<String, String> phoneNumber : phonesList) {
 
             lPhonesList.add(phoneNumber.get("phone"));
+
+            SMSPhone smsPhone = new SMSPhone();
+            smsPhone.setPhoneNumber(phoneNumber.get("phone"));
+            smsPhone.setName(phoneNumber.get("name"));
+            SMSPhones.add(smsPhone);
+
             Log.e("phone", phoneNumber.get("phone"));
         }
 
+        HashMap<String, Object> templateData = new HashMap<String, Object>();
+
+        templateData.put("message", smsMessage.getText().toString());
+        templateData.put("phones", lPhonesList);
+
         prefs.edit().putStringSet(templateName.getText().toString(), lPhonesList).commit();
+
+        DatabaseHelper db = new DatabaseHelper(getApplicationContext());
+
+        SMSTemplate smsTemplate = new SMSTemplate();
+
+        smsTemplate.setName(templateName.getText().toString());
+        smsTemplate.setText(smsMessage.getText().toString());
+        smsTemplate.setPhones(SMSPhones);
+
+        // TODO: First need to check if the template is already there... maybe move to check function
+
+        db.createSMSTemplate(smsTemplate, SMSPhones);
+
 
         Log.e("Phones", lPhonesList.toString());
 
-        shortcutIntent.putExtra("message", smsMessage.getText().toString());
-        shortcutIntent.putExtra("templateName", templateName.getText().toString());
-        shortcutIntent.putExtra("duplicate", false);
+//        shortcutIntent.putExtra("message", smsMessage.getText().toString());
+//        shortcutIntent.putExtra("templateName", templateName.getText().toString());
+//        shortcutIntent.putExtra("duplicate", false);
+//
+//        shortcutIntent.setAction(Intent.ACTION_MAIN);
+//
+//        Intent addIntent = new Intent();
+//        addIntent
+//                .putExtra(Intent.EXTRA_SHORTCUT_INTENT, shortcutIntent);
+//        addIntent.putExtra(Intent.EXTRA_SHORTCUT_NAME, templateName.getText().toString());
+//        addIntent.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE,
+//                Intent.ShortcutIconResource.fromContext(getApplicationContext(),
+//                        R.drawable.ic_launcher));
+//
+//        addIntent
+//                .setAction("com.android.launcher.action.INSTALL_SHORTCUT");
+//
+//        getApplicationContext().sendBroadcast(addIntent);
 
-        shortcutIntent.setAction(Intent.ACTION_MAIN);
-
-        Intent addIntent = new Intent();
-        addIntent
-                .putExtra(Intent.EXTRA_SHORTCUT_INTENT, shortcutIntent);
-        addIntent.putExtra(Intent.EXTRA_SHORTCUT_NAME, templateName.getText().toString());
-        addIntent.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE,
-                Intent.ShortcutIconResource.fromContext(getApplicationContext(),
-                        R.drawable.ic_launcher));
-
-        addIntent
-                .setAction("com.android.launcher.action.INSTALL_SHORTCUT");
-
-        getApplicationContext().sendBroadcast(addIntent);
+        shortcut.create(smsMessage.getText().toString());
 
         Toast.makeText(getApplicationContext(), "Template '" + templateName.getText().toString() + "' saved on home screen",
                 Toast.LENGTH_LONG).show();
