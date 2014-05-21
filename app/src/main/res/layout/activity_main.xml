@@ -50,7 +50,7 @@
       android:onClick="addTemplateButtonClicked"
       android:layout_above="@id/aboutButton"
       android:text="@string/addTemplate" android:layout_alignParentBottom="false" android:layout_alignParentRight="true"
-      style="@style/roundButtonStyle"/>
+      style="@style/roundButtonStyle" android:layout_alignTop="@+id/reinstallShortcutsButton"/>
 
   <CheckBox
       android:id="@+id/confirmationCheckbox"
@@ -70,18 +70,18 @@
 
   <RelativeLayout
       android:id="@+id/listViewContainer"
-      android:layout_above="@id/confirmationCheckbox"
       android:layout_below="@id/listOfTemplatesText"
       android:gravity="top"
       android:layout_width="wrap_content"
       android:background="@drawable/border"
-      android:layout_height="match_parent">
+      android:layout_height="match_parent" android:layout_above="@+id/confirmationCheckbox">
 
     <ListView android:id="@+id/templatesListView"
               android:layout_height="wrap_content"
               android:stackFromBottom="false"
               android:longClickable="true"
-              android:layout_margin="10dp"
-              android:layout_width="match_parent"/>
+              android:layout_alignParentTop="true"
+              android:layout_width="match_parent" android:layout_marginLeft="10dp" android:layout_marginRight="10dp"
+              android:layout_marginTop="10dp" android:layout_alignParentBottom="true"/>
   </RelativeLayout>
 </RelativeLayout>

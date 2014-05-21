@@ -65,4 +65,15 @@ public class SMSTemplate {
         this.phones = phones;
     }
 
+    public String getPhonesAsString()
+    {
+        return this.phones.toString();
+    }
+
+    @Override
+    public String toString()
+    {
+        return this.getName();
+    }
+
 }

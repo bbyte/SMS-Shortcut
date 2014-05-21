@@ -4,6 +4,7 @@ import android.app.*;
 import android.content.*;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.support.v4.app.NotificationCompat;
 import android.telephony.SmsManager;
 import android.text.Html;
@@ -23,14 +24,14 @@ import java.util.*;
 public class MainActivity extends Activity {
 
     public static final String SMS_CONFIRMATION = "confirmation_settings";
-//    private ArrayList<Map<String, String>> mPeopleList;
-    private SharedPreferences prefs = null;
+    public static final String ALREADY_INSTALLED = "installed";
+
     private Map<String, ?> templatesList;
     private ListView templatesListView;
-    private List<Map<String, String>> templatesNames;
-    private SimpleAdapter templatesListAdapter;
+    private List<SMSTemplate> smsTemplates;
+    private ArrayAdapter templatesListAdapter;
 
-//    private Intent addActivityIntent; // = new Intent(this, AddActivity.class);
+    private DatabaseHelper db;
 
     private class retrofitTest extends AsyncTask<Void, Void, Void>
     {
@@ -70,36 +71,34 @@ public class MainActivity extends Activity {
 //        addActivityIntent = new Intent(this, AddActivity.class);
 
         templatesListView = (ListView) findViewById(R.id.templatesListView);
-        templatesNames = new ArrayList<Map<String, String>>();
 
         new getContacts(this).execute();
 
-//        mPeopleList = new ArrayList<Map<String, String>>();
+        db = DatabaseHelper.getHelper(getApplicationContext());
 
-        prefs = getSharedPreferences(this.getPackageName(), MODE_PRIVATE);
+        smsTemplates = db.getAllSMSTemplates();
 
-        getTemplateNames();
+        templatesListAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, smsTemplates);
 
-        templatesListAdapter = new SimpleAdapter(this, templatesNames, android.R.layout.simple_list_item_1, new String[]{"name"}, new int[]{android.R.id.text1});
         templatesListView.setAdapter(templatesListAdapter);
 
         templatesListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
                 new AlertDialog.Builder(MainActivity.this)
-                        .setTitle(templatesNames.get(position).get("name"))
-                        .setMessage(templatesNames.get(position).get("phones"))
+                        .setTitle(smsTemplates.get(position).getName())
+                        .setMessage(smsTemplates.get(position).getPhonesAsString())
                         .setPositiveButton("Delete", new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int which) {
                                 // continue with delete
 
-                                deleteShortCut(templatesNames.get(position).get("name"));
-                                prefs.edit().remove(templatesNames.get(position).get("name")).commit();
+                                deleteShortCut(smsTemplates.get(position).getText());
 
-                                templatesNames.remove(position);
+                                db.deleteSMSTemplate(smsTemplates.get(position).getId());
+
+                                smsTemplates.remove(position);
+
                                 templatesListAdapter.notifyDataSetChanged();
-
-
                                 Toast.makeText(MainActivity.this, "SMS template was deleted", Toast.LENGTH_LONG).show();
                             }
                         })
@@ -115,9 +114,12 @@ public class MainActivity extends Activity {
 
         CheckBox confirmation = (CheckBox) findViewById(R.id.confirmationCheckbox);
 
-        Boolean conf = prefs.getBoolean(SMS_CONFIRMATION, true);
+        if (! db.getPreferenceBooleanValue(ALREADY_INSTALLED))
+            firstRun();
 
-        if (prefs.getBoolean(SMS_CONFIRMATION, true)) {
+        Boolean conf = db.getPreferenceBooleanValue(SMS_CONFIRMATION);
+
+        if (conf) {
 
             confirmation.setChecked(true);
         } else {
@@ -126,53 +128,6 @@ public class MainActivity extends Activity {
         }
 
         catchShortcut(getIntent());
-
-        /*
-        NotificationCompat.Builder mBuilder =
-                new NotificationCompat.Builder(this)
-                        .setSmallIcon(android.R.drawable.ic_dialog_info)
-                        .setContentTitle("My notification")
-                        .setContentText("Hello World!");
-// Creates an explicit intent for an Activity in your app
-        Intent resultIntent = new Intent(this, MainActivity.class);
-
-// The stack builder object will contain an artificial back stack for the
-// started Activity.
-// This ensures that navigating backward from the Activity leads out of
-// your application to the Home screen.
-        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
-// Adds the back stack for the Intent (but not the Intent itself)
-        stackBuilder.addParentStack(MainActivity.class);
-// Adds the Intent that starts the Activity to the top of the stack
-        stackBuilder.addNextIntent(resultIntent);
-        PendingIntent resultPendingIntent =
-                stackBuilder.getPendingIntent(
-                        0,
-                        PendingIntent.FLAG_UPDATE_CURRENT
-                );
-        mBuilder.setContentIntent(resultPendingIntent);
-        NotificationManager mNotificationManager =
-                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-// mId allows you to update the notification later on.
-        mNotificationManager.notify(100, mBuilder.build());
-        */
-    }
-
-    private void getTemplateNames()
-    {
-        templatesNames.clear();
-        templatesList = prefs.getAll();
-
-        for (Map.Entry<String, ?> templateEntry : templatesList.entrySet()) {
-
-            if (templateEntry.getKey().contentEquals(SMS_CONFIRMATION))
-                continue;
-
-            HashMap<String, String> tmp = new HashMap<String, String>();
-            tmp.put("name", templateEntry.getKey());
-            tmp.put("phones", templateEntry.getValue().toString());
-            templatesNames.add(tmp);
-        }
     }
 
     @Override
@@ -187,37 +142,27 @@ public class MainActivity extends Activity {
 
     private void catchShortcut(Intent in)
     {
-        final Set<String> lPhonesList;
+        final SMSTemplate smsTemplate;
+//        DatabaseHelper db;
 
-        if (in.hasExtra("message") && in.hasExtra("templateName")) {
+//        if (in.hasExtra("message") && in.hasExtra("templateName")) {
 
+        if (in.hasExtra("templateName")) {
 
-            final String message = in.getStringExtra("message");
-            String templateName = in.getStringExtra("templateName");
+            db = DatabaseHelper.getHelper(this);
 
-            lPhonesList = prefs.getStringSet(templateName, new HashSet<String>());
+            smsTemplate = db.getSMSTemplateByName(in.getStringExtra("templateName"));
 
-            prefs = getSharedPreferences(this.getPackageName(), MODE_PRIVATE);
-
-            if (prefs.getBoolean(SMS_CONFIRMATION, true)) {
+            if (db.getPreferenceBooleanValue(SMS_CONFIRMATION)) {
 
                 new AlertDialog.Builder(MainActivity.this)
-                        .setTitle(message)
-                        .setMessage(lPhonesList.toString())
+                        .setTitle(smsTemplate.getText())
+                        .setMessage(smsTemplate.getPhonesAsString())
                         .setPositiveButton("Send", new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int which) {
                                 // continue with delete
 
-                                for (String phone : lPhonesList) {
-
-                                    sendSMS(phone, message);
-                                }
-
-
-                                Toast.makeText(getApplicationContext(), "Sending \"" + message + "\" to " + lPhonesList.toString(),
-                                        Toast.LENGTH_LONG).show();
-
-                                exitFromApp();
+                                sendSMSFromTemplateAndExit(smsTemplate);
 
                             }
                         })
@@ -233,17 +178,22 @@ public class MainActivity extends Activity {
                         .show();
             } else {
 
-                for (String phone : lPhonesList) {
-
-                    sendSMS(phone, message);
-                }
-
-                Toast.makeText(getApplicationContext(), "Sending \"" + message + "\" to " + lPhonesList.toString(),
-                        Toast.LENGTH_LONG).show();
-
-                exitFromApp();
+                sendSMSFromTemplateAndExit(smsTemplate);
             }
         }
+    }
+
+    private void sendSMSFromTemplateAndExit(SMSTemplate smsTemplate)
+    {
+        for (SMSPhone phone : smsTemplate.getPhones()) {
+
+            sendSMS(phone.getPhoneNumber(), smsTemplate.getText());
+        }
+
+        Toast.makeText(getApplicationContext(), "Sending \"" + smsTemplate.getText() + "\" to " + smsTemplate.getPhonesAsString(),
+                Toast.LENGTH_LONG).show();
+
+        exitFromApp();
     }
 
     private void exitFromApp()
@@ -330,28 +280,6 @@ public class MainActivity extends Activity {
     }
 
 
-//    @Override
-//    public boolean onCreateOptionsMenu(Menu menu)
-//    {
-//
-//        // Inflate the menu; this adds items to the action bar if it is present.
-//        getMenuInflater().inflate(R.menu.main, menu);
-//        return true;
-//    }
-//
-//    @Override
-//    public boolean onOptionsItemSelected(MenuItem item)
-//    {
-//        // Handle action bar item clicks here. The action bar will
-//        // automatically handle clicks on the Home/Up button, so long
-//        // as you specify a parent activity in AndroidManifest.xml.
-//        int id = item.getItemId();
-//        if (id == R.id.action_settings) {
-//            return true;
-//        }
-//        return super.onOptionsItemSelected(item);
-//    }
-
     // Button functions
 
     public void addTemplateButtonClicked(View view)
@@ -405,20 +333,23 @@ public class MainActivity extends Activity {
 
     public void reinstallShortcutsButtonClicked(View view)
     {
+        for (SMSTemplate smsTemplate : db.getAllSMSTemplates()) {
 
-        for (HashMap<String, String> template : templatesNames) {
-
-            Shortcut shortcut = new Shortcut(getApplicationContext(), template.get("name"));
-
-
+            Shortcut shortcut = new Shortcut(this, smsTemplate.getName());
+            shortcut.create();
         }
+
+        Toast.makeText(this, "All shortcuts are restored on home screen", Toast.LENGTH_LONG).show();
     }
 
     public void confirmationClicked(View view)
     {
         CheckBox checkbox = (CheckBox) view;
 
-        prefs.edit().putBoolean(SMS_CONFIRMATION, checkbox.isChecked()).commit();
+        if (checkbox.isChecked())
+            db.setPreference(SMS_CONFIRMATION, "true");
+        else
+            db.setPreference(SMS_CONFIRMATION, "false");
     }
 
     @Override
@@ -426,30 +357,27 @@ public class MainActivity extends Activity {
     {
         super.onRestart();
 
-        getTemplateNames();
+//        smsTemplates = db.getAllSMSTemplates();
+
+        // strange but token from here
+        // http://stackoverflow.com/questions/16219732/refreshing-arrayadapter-onresume-notifydatasetchanged-not-working
+
+        smsTemplates.clear();
+        smsTemplates.addAll(db.getAllSMSTemplates());
+
+        Log.e("onRestart", smsTemplates.toString());
         templatesListAdapter.notifyDataSetChanged();
     }
 
     private void deleteShortCut(String templateName) {
 
-
         Shortcut shortcut = new Shortcut(getApplicationContext(), templateName);
         shortcut.remove();
+    }
 
-//        Intent shortcutIntent = new Intent(getApplicationContext(), MainActivity.class);
-//        shortcutIntent.setAction(Intent.ACTION_MAIN);
-//
-//        Intent addIntent = new Intent();
-//        addIntent
-//                .putExtra(Intent.EXTRA_SHORTCUT_INTENT, shortcutIntent);
-//        addIntent.putExtra(Intent.EXTRA_SHORTCUT_NAME, templateName);
-//        addIntent.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE,
-//                Intent.ShortcutIconResource.fromContext(getApplicationContext(),
-//                        R.drawable.ic_launcher));
-//
-//        addIntent
-//                .setAction("com.android.launcher.action.UNINSTALL_SHORTCUT");
-//
-//        getApplicationContext().sendBroadcast(addIntent);
+    private void firstRun()
+    {
+        db.setPreference(ALREADY_INSTALLED, "true");
+        db.setPreference(SMS_CONFIRMATION, "true");
     }
 }

@@ -58,4 +58,10 @@ public class SMSPhone {
     {
         this.name = name;
     }
+
+    @Override
+    public String toString()
+    {
+        return this.getPhoneNumber() + "(" + (this.getName() != null ? this.getName() : "") + ")";
+    }
 }

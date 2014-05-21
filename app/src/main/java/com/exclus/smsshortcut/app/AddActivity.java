@@ -5,6 +5,7 @@ import android.app.ProgressDialog;
 import android.content.*;
 import android.os.Bundle;
 import android.provider.Contacts;
+import android.provider.ContactsContract;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -47,6 +48,24 @@ public class AddActivity extends Activity
                 R.id.contactName, R.id.contactNumber, R.id.contactType}
         );
         phoneInputBox.setAdapter(phoneInputBoxAdapter);
+    }
+
+    private String getNameFromPhonenumber(String phone)
+    {
+        // defaults to "Unknown string"
+
+        String name = "Unknown";
+
+        for (Map<String, String> personDetails : Global.getInstance().mPeopleList) {
+
+            if (personDetails.get("Phone").contentEquals(phone)) {
+
+                name = personDetails.get("Name");
+                break;
+            }
+        }
+
+        return name;
     }
 
     @Override
@@ -126,6 +145,7 @@ public class AddActivity extends Activity
             } else {
 
                 phonesList.add(createPhone("phone", phoneInputBox.getText().toString()));
+//                phonesList.add(createPhone("name", getNameFromPhonenumber(phoneInputBox.getText().toString())));
 
                 phonesListAdapter.notifyDataSetChanged();
                 phoneInputBox.setText("");
@@ -153,30 +173,30 @@ public class AddActivity extends Activity
 
         Shortcut shortcut = new Shortcut(getApplicationContext(), templateName.getText().toString());
 
-        Set lPhonesList = new HashSet();
+//        Set lPhonesList = new HashSet();
 
         List<SMSPhone> SMSPhones = new ArrayList<SMSPhone>();
 
         for (Map<String, String> phoneNumber : phonesList) {
 
-            lPhonesList.add(phoneNumber.get("phone"));
+//            lPhonesList.add(phoneNumber.get("phone"));
 
             SMSPhone smsPhone = new SMSPhone();
             smsPhone.setPhoneNumber(phoneNumber.get("phone"));
-            smsPhone.setName(phoneNumber.get("name"));
+            smsPhone.setName(getNameFromPhonenumber(phoneNumber.get("phone")));
             SMSPhones.add(smsPhone);
 
-            Log.e("phone", phoneNumber.get("phone"));
+            Log.e("phone", smsPhone.toString());
         }
 
-        HashMap<String, Object> templateData = new HashMap<String, Object>();
+//        HashMap<String, Object> templateData = new HashMap<String, Object>();
+//
+//        templateData.put("message", smsMessage.getText().toString());
+//        templateData.put("phones", lPhonesList);
+//
+//        prefs.edit().putStringSet(templateName.getText().toString(), lPhonesList).commit();
 
-        templateData.put("message", smsMessage.getText().toString());
-        templateData.put("phones", lPhonesList);
-
-        prefs.edit().putStringSet(templateName.getText().toString(), lPhonesList).commit();
-
-        DatabaseHelper db = new DatabaseHelper(getApplicationContext());
+        DatabaseHelper db = DatabaseHelper.getHelper(getApplicationContext());
 
         SMSTemplate smsTemplate = new SMSTemplate();
 
@@ -189,7 +209,7 @@ public class AddActivity extends Activity
         db.createSMSTemplate(smsTemplate, SMSPhones);
 
 
-        Log.e("Phones", lPhonesList.toString());
+        Log.e("Phones", SMSPhones.toString());
 
 //        shortcutIntent.putExtra("message", smsMessage.getText().toString());
 //        shortcutIntent.putExtra("templateName", templateName.getText().toString());
@@ -210,7 +230,9 @@ public class AddActivity extends Activity
 //
 //        getApplicationContext().sendBroadcast(addIntent);
 
-        shortcut.create(smsMessage.getText().toString());
+//        shortcut.create(smsMessage.getText().toString());
+
+        shortcut.create();
 
         Toast.makeText(getApplicationContext(), "Template '" + templateName.getText().toString() + "' saved on home screen",
                 Toast.LENGTH_LONG).show();

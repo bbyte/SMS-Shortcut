@@ -15,12 +15,15 @@ import java.util.List;
  */
 public class DatabaseHelper extends SQLiteOpenHelper{
 
+    private static DatabaseHelper instance;
+
+
     // Logcat tag
     private static final String LOG = "DatabaseHelper";
 
 
 
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
     private static final String DATABASE_NAME = "SMSTemplatesDB";
 
     private static final String TABLE_SMSTEMPLATES = "SMSTemplates";
@@ -47,13 +50,23 @@ public class DatabaseHelper extends SQLiteOpenHelper{
     private static final String CREATE_SMSPHONES_TABLE = "CREATE TABLE " + TABLE_SMSPHONES + "("
             + KEY_ID + " INTEGER PRIMARY KEY, "
             + KEY_PHONE + " TEXT NOT NULL, "
-            + KEY_NAME + " TEXT"
+            + KEY_NAME + " TEXT, "
             + KEY_TEMPLATEID + " INTEGER NO NULL)";
 
     private static final String CREATE_PREFENCES_TABLE = "CREATE TABLE " + TABLE_PREFERENCES + "("
             + KEY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
             + KEY_KEY + " TEXT NOT NULL UNIQUE, "
             + KEY_VALUE + " TEXT)";
+
+    // Singleton
+
+    public static synchronized DatabaseHelper getHelper(Context context)
+    {
+        if (instance == null)
+            instance = new DatabaseHelper(context);
+
+        return instance;
+    }
 
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -103,6 +116,8 @@ public class DatabaseHelper extends SQLiteOpenHelper{
         values.put(KEY_TEMPLATEID, phone.getSMSTemplateId());
         values.put(KEY_NAME, phone.getName());
         values.put(KEY_PHONE, phone.getPhoneNumber());
+
+        Log.e(LOG, values.toString());
 
         long phoneId = db.insert(TABLE_SMSPHONES, null, values);
 
@@ -167,6 +182,8 @@ public class DatabaseHelper extends SQLiteOpenHelper{
 
                 smsTemplate.setPhones(getAllSMSPhonesByTemplateId(smsTemplate.getId()));
 
+                Log.e(LOG, smsTemplate.getPhones().toString());
+
                 smsTemplates.add(smsTemplate);
             } while (c.moveToNext());
         }
@@ -178,7 +195,7 @@ public class DatabaseHelper extends SQLiteOpenHelper{
     {
         SMSTemplate smsTemplate = new SMSTemplate();
 
-        String selectQuery = "SELECT * FROM " + TABLE_SMSTEMPLATES + " WHERE " + KEY_NAME + " = " + name + " LIMIT 1";
+        String selectQuery = "SELECT * FROM " + TABLE_SMSTEMPLATES + " WHERE `" + KEY_NAME + "` = '" + name + "' LIMIT 1";
 
         Log.e(LOG, selectQuery);
 
@@ -215,6 +232,8 @@ public class DatabaseHelper extends SQLiteOpenHelper{
                 smsPhone.setPhoneNumber(c.getString(c.getColumnIndex(KEY_PHONE)));
                 smsPhone.setName(c.getString(c.getColumnIndex(KEY_NAME)));
                 smsPhone.setSMSTemplateId(smsTemplateId);
+
+                phones.add(smsPhone);
             } while (c.moveToNext());
         }
 
@@ -250,7 +269,7 @@ public class DatabaseHelper extends SQLiteOpenHelper{
     public Preference getPreference(String preferenceKey)
     {
         String preferenceValue = "";
-        String selectQuery = "SELECT * FROM " + TABLE_PREFERENCES + " WHERE " + KEY_KEY + " = " + preferenceKey;
+        String selectQuery = "SELECT * FROM " + TABLE_PREFERENCES + " WHERE `" + KEY_KEY + "` = '" + preferenceKey + "'";
 
         Log.e(LOG, selectQuery);
 
@@ -273,7 +292,7 @@ public class DatabaseHelper extends SQLiteOpenHelper{
     public String getPreferenceValue(String preferenceKey)
     {
         String preferenceValue = "";
-        String selectQuery = "SELECT value FROM " + TABLE_PREFERENCES + " WHERE " + KEY_KEY + " = " + preferenceKey;
+        String selectQuery = "SELECT value FROM `" + TABLE_PREFERENCES + "` WHERE " + KEY_KEY + " = '" + preferenceKey + "'";
 
         Log.e(LOG, selectQuery);
 
@@ -287,9 +306,31 @@ public class DatabaseHelper extends SQLiteOpenHelper{
         return preferenceValue;
     }
 
-    public void setPreference(Preference preference)
+    public Boolean getPreferenceBooleanValue(String preferenceKey)
     {
-        if (isExistsPreference(preference.getKey())) {
+        String preferenceValue = getPreferenceValue(preferenceKey);
+
+        if (preferenceValue.contentEquals("true")) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+//    public void setPreference(Preference preference)
+//    {
+//        if (isExistsPreference(preference.getKey())) {
+//            updatePreference(preference);
+//        } else {
+//            createPreference(preference);
+//        }
+//    }
+
+    public void setPreference(String key, String value)
+    {
+        Preference preference = new Preference(key, value);
+
+        if (isExistsPreference(key)) {
             updatePreference(preference);
         } else {
             createPreference(preference);

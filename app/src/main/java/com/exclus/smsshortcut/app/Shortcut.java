@@ -27,7 +27,7 @@ public class Shortcut {
         addIntent.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE,
                 Intent.ShortcutIconResource.fromContext(context,
                         R.drawable.ic_launcher));
-
+        addIntent.putExtra("duplicate", false); // Just create once
     }
 
     public String getShortName()
@@ -40,14 +40,14 @@ public class Shortcut {
         this.name = name;
     }
 
-    public Boolean create(String message)
+//    public Boolean create(String message)
+    public Boolean create()
     {
-        this.message = message;
+//        this.message = message;
 
 //        Intent shortcutIntent = new Intent(context, MainActivity.class);
-        shortcutIntent.putExtra("message", this.message);
+//        shortcutIntent.putExtra("message", this.message);
         shortcutIntent.putExtra("templateName", this.name);
-        shortcutIntent.putExtra("duplicate", false);
 
 //        shortcutIntent.setAction(Intent.ACTION_MAIN);
 
