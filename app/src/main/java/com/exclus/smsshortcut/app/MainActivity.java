@@ -26,10 +26,12 @@ public class MainActivity extends Activity {
     public static final String SMS_CONFIRMATION = "confirmation_settings";
     public static final String ALREADY_INSTALLED = "installed";
 
-    private Map<String, ?> templatesList;
     private ListView templatesListView;
     private List<SMSTemplate> smsTemplates;
     private ArrayAdapter templatesListAdapter;
+
+    private List<Map<String, String>> emptySMSTemplates;
+    private SimpleAdapter emptySMSTemplatesAdapter;
 
     private DatabaseHelper db;
 
@@ -70,21 +72,50 @@ public class MainActivity extends Activity {
 
 //        addActivityIntent = new Intent(this, AddActivity.class);
 
+        HashMap<String, String> mp = new HashMap<String, String>();
+
+        mp.put("table", "something");
+
+        new submitStatistics().execute(mp);
+
         templatesListView = (ListView) findViewById(R.id.templatesListView);
 
         new getContacts(this).execute();
 
         db = DatabaseHelper.getHelper(getApplicationContext());
 
+        // TODO: need to find better way to display help on the screen
+
+        emptySMSTemplates = new ArrayList<Map<String, String>>();
+        emptySMSTemplates.add(new HashMap<String, String>(){{put("text", "No templates are created");}});
+        emptySMSTemplates.add(new HashMap<String, String>(){{put("text", "To create a template, click on");}});
+        emptySMSTemplates.add(new HashMap<String, String>(){{put("text", "\"Add template\" button");}});
+
+        emptySMSTemplatesAdapter = new SimpleAdapter(this, emptySMSTemplates, R.layout.itallic_list, new String[]{"text"}, new int[]{android.R.id.text1});
+
         smsTemplates = db.getAllSMSTemplates();
 
         templatesListAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, smsTemplates);
 
-        templatesListView.setAdapter(templatesListAdapter);
+        if (smsTemplates.isEmpty()) {
+
+            templatesListView.setAdapter(emptySMSTemplatesAdapter);
+        } else {
+
+            templatesListView.setAdapter(templatesListAdapter);
+        }
 
         templatesListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
+
+                if (smsTemplates.isEmpty()) {
+
+                    templatesListView.setAdapter(emptySMSTemplatesAdapter);
+
+                    return;
+                }
+
                 new AlertDialog.Builder(MainActivity.this)
                         .setTitle(smsTemplates.get(position).getName())
                         .setMessage(smsTemplates.get(position).getPhonesAsString())
@@ -92,7 +123,7 @@ public class MainActivity extends Activity {
                             public void onClick(DialogInterface dialog, int which) {
                                 // continue with delete
 
-                                deleteShortCut(smsTemplates.get(position).getText());
+                                deleteShortCut(smsTemplates.get(position).toString());
 
                                 db.deleteSMSTemplate(smsTemplates.get(position).getId());
 
@@ -365,13 +396,21 @@ public class MainActivity extends Activity {
         smsTemplates.clear();
         smsTemplates.addAll(db.getAllSMSTemplates());
 
+        if (smsTemplates.isEmpty()) {
+
+            templatesListView.setAdapter(emptySMSTemplatesAdapter);
+        } else {
+
+            templatesListView.setAdapter(templatesListAdapter);
+            templatesListAdapter.notifyDataSetChanged();
+        }
+
         Log.e("onRestart", smsTemplates.toString());
-        templatesListAdapter.notifyDataSetChanged();
     }
 
     private void deleteShortCut(String templateName) {
 
-        Shortcut shortcut = new Shortcut(getApplicationContext(), templateName);
+        Shortcut shortcut = new Shortcut(this, templateName);
         shortcut.remove();
     }
 

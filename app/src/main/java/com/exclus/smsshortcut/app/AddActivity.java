@@ -1,5 +1,8 @@
 package com.exclus.smsshortcut.app;
 
+import android.animation.ArgbEvaluator;
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.*;
@@ -8,6 +11,7 @@ import android.provider.Contacts;
 import android.provider.ContactsContract;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -19,12 +23,12 @@ import java.util.regex.Pattern;
 
 public class AddActivity extends Activity
 {
-    private ArrayList<Map<String, String>> mPeopleList;
     private AutoCompleteTextView phoneInputBox;
     private List<Map<String, String>> phonesList = new ArrayList<Map<String,String>>();
-    private SimpleAdapter phonesListAdapter, phoneInputBoxAdapter;
+    private SimpleAdapter phonesListAdapter, phoneInputBoxAdapter, emptyListAdapter;
+    private List<Map<String, String>> emptyPhoneList = new ArrayList<Map<String, String>>();
 
-    private SharedPreferences prefs = null;
+    private ListView phonesListView;
 
     private ProgressDialog progressDialog;
 
@@ -80,42 +84,57 @@ public class AddActivity extends Activity
         if (Global.getInstance().loadingContacts)
             progressDialog = ProgressDialog.show(AddActivity.this, "", "Loading contacts...");
 
-        prefs = getSharedPreferences(this.getPackageName(), MODE_PRIVATE);
-
 
         phoneInputBox = (AutoCompleteTextView) findViewById(R.id.phoneInputBox);
+        phonesListView = (ListView) findViewById(R.id.phonesListView);
 
         if (! Global.getInstance().loadingContacts) {
 
             setAutocompleteAdapter(this);
         }
 
+
         phoneInputBox.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
             @Override
             public void onItemClick(AdapterView<?> av, View arg1, int index,
                                     long arg3) {
+
                 Map<String, String> map = (Map<String, String>) av.getItemAtPosition(index);
 
-                String name = map.get("Name");
-                String number = map.get("Phone");
-//                phoneInputBox.setText("" + name + "<" + number + ">");
-                phoneInputBox.setText(number);
+                phonesList.add(createPhone("phone", map.get("Phone")));
+//                phonesListAdapter = new SimpleAdapter(getApplicationContext(), phonesList, android.R.layout.simple_list_item_1, new String[]{"phone"}, new int[]{android.R.id.text1});
+                phonesListAdapter.notifyDataSetChanged();
 
+                phonesListView.setAdapter(phonesListAdapter);
+
+                phoneInputBox.setText("");
+                hideKeyboard();
             }
         });
 
-        ListView phonesListView = (ListView) findViewById(R.id.phonesListView);
+
+//        emptyPhoneList.add(createPhone("phone", "Please add a phone by entering it in \"To...\" field"));
+        emptyPhoneList.add(createPhone("phone", "Please add a phone"));
+        emptyPhoneList.add(createPhone("phone", "You can do that by start typing in \"To...\" field"));
+
 
         phonesListAdapter = new SimpleAdapter(this, phonesList, android.R.layout.simple_list_item_1, new String[]{"phone"}, new int[]{android.R.id.text1});
+        emptyListAdapter = new SimpleAdapter(this, emptyPhoneList, R.layout.itallic_list, new String[]{"phone"}, new int[]{android.R.id.text1});
 
-        phonesListView.setAdapter(phonesListAdapter);
+//        phonesListView.setAdapter(phonesListAdapter);
+
+        phonesListView.setAdapter(emptyListAdapter);
 
         phonesListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Toast.makeText(getApplicationContext(), "Use long click to delete phone from template", Toast.LENGTH_LONG).show();
-                hideKeyboard();
+
+                if (! phonesList.isEmpty()) {
+
+                    Toast.makeText(getApplicationContext(), "Use long click to delete phone from template", Toast.LENGTH_LONG).show();
+                    hideKeyboard();
+                }
             }
         });
 
@@ -123,9 +142,19 @@ public class AddActivity extends Activity
 
             public boolean onItemLongClick(AdapterView<?> arg0, View arg1, int pos, long id) {
 
-                phonesList.remove(pos);
-                phonesListAdapter.notifyDataSetChanged();
-                Toast.makeText(getApplicationContext(), "Removed", Toast.LENGTH_LONG).show();
+                if (! phonesList.isEmpty()) {
+
+                    phonesList.remove(pos);
+                    phonesListAdapter.notifyDataSetChanged();
+                    Toast.makeText(getApplicationContext(), "Removed", Toast.LENGTH_LONG).show();
+                }
+
+                if (phonesList.isEmpty()) {
+
+//                    phonesListAdapter = new SimpleAdapter(getApplicationContext(), emptyPhoneList, R.layout.itallic_list, new String[]{"phone"}, new int[]{android.R.id.text1});
+                    phonesListView.setAdapter(emptyListAdapter);
+                }
+
 
                 return true;
             }
@@ -144,8 +173,12 @@ public class AddActivity extends Activity
                 Toast.makeText(getApplicationContext(), "Number already added", Toast.LENGTH_LONG).show();
             } else {
 
+
+
                 phonesList.add(createPhone("phone", phoneInputBox.getText().toString()));
-//                phonesList.add(createPhone("name", getNameFromPhonenumber(phoneInputBox.getText().toString())));
+
+                phonesListAdapter = new SimpleAdapter(this, phonesList, android.R.layout.simple_list_item_1, new String[]{"phone"}, new int[]{android.R.id.text1});
+
 
                 phonesListAdapter.notifyDataSetChanged();
                 phoneInputBox.setText("");
@@ -158,28 +191,59 @@ public class AddActivity extends Activity
     {
         EditText templateName = (EditText) findViewById(R.id.templateName);
         EditText smsMessage = (EditText) findViewById(R.id.smsMessage);
+        ListView phoneListView = (ListView) findViewById(R.id.phonesListView);
 
-        if (isEmpty(templateName) || isEmpty(smsMessage) || phonesList.isEmpty()) {
+        Toast toast;
 
-            Toast.makeText(getApplicationContext(), "All fields have to be filled", Toast.LENGTH_LONG).show();
+        if (phonesList.isEmpty()) {
+
+            redBlinkView(phoneListView);
+
+            toast = Toast.makeText(getApplicationContext(), "At least one number have to be added", Toast.LENGTH_LONG);
+//            toast.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, 0);
+            toast.show();
+
             hideKeyboard();
 
             return;
         }
 
-        //Adding shortcut for AddActivity
-        //on Home screen
-//        Intent shortcutIntent = new Intent(getApplicationContext(), MainActivity.class);
+        // TODO: Toast must be on top
+
+        if (isEmpty(smsMessage)) {
+
+            redBlinkView(smsMessage);
+
+            toast = Toast.makeText(getApplicationContext(), "SMS message can't be empty", Toast.LENGTH_LONG);
+            toast.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, 30);
+            toast.show();
+
+            hideKeyboard();
+
+            return;
+        }
+
+
+        if (isEmpty(templateName)) {
+
+            redBlinkView(templateName);
+
+            toast = Toast.makeText(getApplicationContext(), "Template name can't be empty", Toast.LENGTH_LONG);
+            toast.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, 30);
+            toast.show();
+
+            hideKeyboard();
+
+            return;
+        }
+
 
         Shortcut shortcut = new Shortcut(getApplicationContext(), templateName.getText().toString());
 
-//        Set lPhonesList = new HashSet();
 
         List<SMSPhone> SMSPhones = new ArrayList<SMSPhone>();
 
         for (Map<String, String> phoneNumber : phonesList) {
-
-//            lPhonesList.add(phoneNumber.get("phone"));
 
             SMSPhone smsPhone = new SMSPhone();
             smsPhone.setPhoneNumber(phoneNumber.get("phone"));
@@ -189,13 +253,6 @@ public class AddActivity extends Activity
             Log.e("phone", smsPhone.toString());
         }
 
-//        HashMap<String, Object> templateData = new HashMap<String, Object>();
-//
-//        templateData.put("message", smsMessage.getText().toString());
-//        templateData.put("phones", lPhonesList);
-//
-//        prefs.edit().putStringSet(templateName.getText().toString(), lPhonesList).commit();
-
         DatabaseHelper db = DatabaseHelper.getHelper(getApplicationContext());
 
         SMSTemplate smsTemplate = new SMSTemplate();
@@ -204,33 +261,9 @@ public class AddActivity extends Activity
         smsTemplate.setText(smsMessage.getText().toString());
         smsTemplate.setPhones(SMSPhones);
 
-        // TODO: First need to check if the template is already there... maybe move to check function
-
         db.createSMSTemplate(smsTemplate, SMSPhones);
 
-
         Log.e("Phones", SMSPhones.toString());
-
-//        shortcutIntent.putExtra("message", smsMessage.getText().toString());
-//        shortcutIntent.putExtra("templateName", templateName.getText().toString());
-//        shortcutIntent.putExtra("duplicate", false);
-//
-//        shortcutIntent.setAction(Intent.ACTION_MAIN);
-//
-//        Intent addIntent = new Intent();
-//        addIntent
-//                .putExtra(Intent.EXTRA_SHORTCUT_INTENT, shortcutIntent);
-//        addIntent.putExtra(Intent.EXTRA_SHORTCUT_NAME, templateName.getText().toString());
-//        addIntent.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE,
-//                Intent.ShortcutIconResource.fromContext(getApplicationContext(),
-//                        R.drawable.ic_launcher));
-//
-//        addIntent
-//                .setAction("com.android.launcher.action.INSTALL_SHORTCUT");
-//
-//        getApplicationContext().sendBroadcast(addIntent);
-
-//        shortcut.create(smsMessage.getText().toString());
 
         shortcut.create();
 
@@ -283,6 +316,20 @@ public class AddActivity extends Activity
     {
         if (progressDialog.isShowing())
             progressDialog.dismiss();
+    }
+
+    private void redBlinkView(View view)
+    {
+        int RED = 0xffFF8080;
+        int WHITE = 0xffffffff;
+
+
+        ValueAnimator colorAnim = ObjectAnimator.ofInt(view, "backgroundColor", WHITE, RED);
+        colorAnim.setDuration(1000);
+        colorAnim.setEvaluator(new ArgbEvaluator());
+        colorAnim.setRepeatCount(1);
+        colorAnim.setRepeatMode(ValueAnimator.REVERSE);
+        colorAnim.start();
     }
 
 
