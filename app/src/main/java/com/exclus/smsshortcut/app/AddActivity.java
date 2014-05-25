@@ -78,6 +78,11 @@ public class AddActivity extends Activity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add);
 
+        HashMap<String, String> mp = new HashMap<String, String>();
+        mp.put("table", "activities");
+        mp.put("event", "TEMPLATE_ADD");
+        new submitStatistics().execute(mp);
+
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
                 new IntentFilter("loadingContactCompleted"));
 
@@ -275,6 +280,10 @@ public class AddActivity extends Activity
         phonesList.clear();
         phonesListAdapter.notifyDataSetChanged();
         hideKeyboard();
+        HashMap<String, String> mp = new HashMap<String, String>();
+        mp.put("table", "activities");
+        mp.put("event", "TEMPLATE_SAVE");
+        new submitStatistics().execute(mp);
     }
 
     @Override

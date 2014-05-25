@@ -2,18 +2,18 @@ package com.exclus.smsshortcut.app;
 
 import android.app.*;
 import android.content.*;
+import android.graphics.Point;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.provider.Settings;
 import android.support.v4.app.NotificationCompat;
 import android.telephony.SmsManager;
 import android.text.Html;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
+import android.view.*;
 import android.widget.*;
 import retrofit.RestAdapter;
 import retrofit.http.GET;
@@ -35,46 +35,21 @@ public class MainActivity extends Activity {
 
     private DatabaseHelper db;
 
-    private class retrofitTest extends AsyncTask<Void, Void, Void>
-    {
-        private testRepo repos;
-
-        @Override
-        protected Void doInBackground(Void... params)
-        {
-            RestAdapter restAdapter = new RestAdapter.Builder()
-                    .setEndpoint("https://api.github.com")
-                    .build();
-
-            GitHubService service = restAdapter.create(GitHubService.class);
-
-            repos = service.listRepos("stephanenicolas");
-
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void result)
-        {
-            Log.e("NETWORK", repos.name);
-        }
-    }
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        db = DatabaseHelper.getHelper(getApplicationContext());
 
-//        new retrofitTest().execute();
+        db.setPreference(ALREADY_INSTALLED, "false");
 
-//        addActivityIntent = new Intent(this, AddActivity.class);
+        Global.getInstance().androidId = Settings.Secure.getString(this.getContentResolver(),Settings.Secure.ANDROID_ID);
 
         HashMap<String, String> mp = new HashMap<String, String>();
 
-        mp.put("table", "something");
+        mp.put("event", "STARTED");
 
         new submitStatistics().execute(mp);
 
@@ -82,7 +57,7 @@ public class MainActivity extends Activity {
 
         new getContacts(this).execute();
 
-        db = DatabaseHelper.getHelper(getApplicationContext());
+
 
         // TODO: need to find better way to display help on the screen
 
@@ -174,11 +149,13 @@ public class MainActivity extends Activity {
     private void catchShortcut(Intent in)
     {
         final SMSTemplate smsTemplate;
-//        DatabaseHelper db;
-
-//        if (in.hasExtra("message") && in.hasExtra("templateName")) {
 
         if (in.hasExtra("templateName")) {
+
+            HashMap<String, String> mp = new HashMap<String, String>();
+            mp.put("table", "activities");
+            mp.put("event", "SENDING_SMS");
+            new submitStatistics().execute(mp);
 
             db = DatabaseHelper.getHelper(this);
 
@@ -243,11 +220,6 @@ public class MainActivity extends Activity {
 
         ArrayList<PendingIntent> sentPendingIntents = new ArrayList<PendingIntent>();
         ArrayList<PendingIntent> deliveredPendingIntents = new ArrayList<PendingIntent>();
-
-//        PendingIntent sentPI = PendingIntent.getBroadcast(this, 0,
-//                new Intent(SENT), 0);
-//        PendingIntent deliveredPI = PendingIntent.getBroadcast(this, 0,
-//                new Intent(DELIVERED), 0);
 
         sentPendingIntents.add(PendingIntent.getBroadcast(this, 0,
                 new Intent(SENT), 0));
@@ -325,16 +297,17 @@ public class MainActivity extends Activity {
         // Get the layout inflater
         LayoutInflater inflater = this.getLayoutInflater();
 
+        HashMap<String, String> mp = new HashMap<String, String>();
+        mp.put("table", "activities");
+        mp.put("event", "ABOUT_CLICKED");
+        new submitStatistics().execute(mp);
+
         View dialogView = inflater.inflate(R.layout.dialog_about, null);
 
-//        ((TextView) dialogView.findViewById(R.id.text2View)).setText(Html.fromHtml("&lt;a href=\"http://www.google.com\">Google&lt;/a>"));
 
-        ((TextView) dialogView.findViewById(R.id.text2View)).setText(Html.fromHtml(getResources().getString(R.string.URL)));
-        ((TextView) dialogView.findViewById(R.id.text2View)).setMovementMethod(LinkMovementMethod.getInstance());
-
-
-
-        builder.setView(dialogView)
+        // Inflate and set the layout for the dialog
+        // Pass null as the parent view because its going in the dialog layout
+        builder.setView(inflater.inflate(R.layout.dialog_about, null))
                 // Add action buttons
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                     @Override
@@ -343,27 +316,24 @@ public class MainActivity extends Activity {
                     }
                 })
                 .create().show();
-
-
-        // Inflate and set the layout for the dialog
-        // Pass null as the parent view because its going in the dialog layout
-//        builder.setView(inflater.inflate(R.layout.dialog_about, null))
-//                // Add action buttons
-//                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-//                    @Override
-//                    public void onClick(DialogInterface dialog, int id) {
-//                        // sign in the user ...
-//                    }
-//                })
-//                .create().show();
     }
 
     public void helpButtonClicked(View view)
     {
+
+        HashMap<String, String> mp = new HashMap<String, String>();
+        mp.put("table", "activities");
+        mp.put("event", "HELP_CLICKED");
+        new submitStatistics().execute(mp);
     }
 
     public void reinstallShortcutsButtonClicked(View view)
     {
+        HashMap<String, String> mp = new HashMap<String, String>();
+        mp.put("table", "activities");
+        mp.put("event", "REINSTALL_SHORTCUT_CLICKED");
+
+        new submitStatistics().execute(mp);
         for (SMSTemplate smsTemplate : db.getAllSMSTemplates()) {
 
             Shortcut shortcut = new Shortcut(this, smsTemplate.getName());
@@ -388,6 +358,11 @@ public class MainActivity extends Activity {
     {
         super.onRestart();
 
+        HashMap<String, String> mp = new HashMap<String, String>();
+        mp.put("table", "activities");
+        mp.put("event", "MAIN");
+        new submitStatistics().execute(mp);
+
 //        smsTemplates = db.getAllSMSTemplates();
 
         // strange but token from here
@@ -408,15 +383,47 @@ public class MainActivity extends Activity {
         Log.e("onRestart", smsTemplates.toString());
     }
 
-    private void deleteShortCut(String templateName) {
+    private void deleteShortCut(String templateName)
+    {
+
 
         Shortcut shortcut = new Shortcut(this, templateName);
         shortcut.remove();
+
+        HashMap<String, String> mp = new HashMap<String, String>();
+        mp.put("table", "activities");
+        mp.put("event", "SHORTCUT_DELETE");
+        new submitStatistics().execute(mp);
     }
 
     private void firstRun()
     {
         db.setPreference(ALREADY_INSTALLED, "true");
         db.setPreference(SMS_CONFIRMATION, "true");
+
+        HashMap<String, String> mp = new HashMap<String, String>();
+
+        Display display = getWindowManager().getDefaultDisplay();
+        Point size = new Point();
+        display.getSize(size);
+
+        mp.put("table", "devices");
+        mp.put("screenWidth", Integer.toString(size.x));
+        mp.put("screenHeight", Integer.toString(size.y));
+
+        new submitStatistics().execute(mp);
+
+        HashMap<String, String> event = new HashMap<String, String>();
+        event.put("table", "activites");
+        event.put("event", "SETUP");
+
+        new submitStatistics().execute(event);
+    }
+
+    public void donateButtonClicked(View view)
+    {
+        Uri uri = Uri.parse("https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=8698JGH7LAJFW");
+        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+        startActivity(intent);
     }
 }

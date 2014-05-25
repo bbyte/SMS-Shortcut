@@ -31,18 +31,16 @@
       android:id="@+id/text1View" android:layout_gravity="center_horizontal"/>
 
 
-  <TextView
-      android:layout_width="match_parent"
-      android:layout_height="wrap_content"
-      android:layout_marginTop="20dp"
-      android:gravity="center_horizontal"
-      android:layout_below="@id/text1View"
-      android:layout_centerHorizontal="true"
-      android:textAppearance="?android:attr/textAppearanceSmall"
+  <ImageButton
+      android:src="@drawable/btn_donate_lg"
       android:layout_margin="20dp"
-      android:autoLink="web"
-      android:linksClickable="true"
-      android:id="@+id/text2View" android:layout_gravity="center_horizontal"/>
-
+      android:gravity="center_horizontal"
+      android:layout_centerHorizontal="true"
+      android:layout_below="@id/text1View"
+      android:layout_gravity="center_horizontal"
+      android:layout_width="wrap_content"
+      android:background="@android:color/transparent"
+      android:onClick="donateButtonClicked"
+      android:layout_height="wrap_content"/>
 
 </RelativeLayout>

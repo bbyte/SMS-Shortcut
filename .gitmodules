@@ -1,0 +1,3 @@
+[submodule "submodules/android-donations-lib"]
+	path = submodules/android-donations-lib
+	url = https://github.com/dschuermann/android-donations-lib
