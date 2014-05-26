@@ -14,14 +14,14 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_centerHorizontal="true"/>
-  <Button
-      android:id="@+id/helpButton"
-      android:layout_width="10dp"
-      android:layout_height="wrap_content"
-      android:onClick="helpButtonClicked"
-      android:layout_toLeftOf="@id/strut"
-      android:text="Help" android:layout_alignParentBottom="true" android:layout_alignParentLeft="true"
-      style="@style/roundButtonStyle"/>
+  <!--<Button-->
+      <!--android:id="@+id/helpButton"-->
+      <!--android:layout_width="10dp"-->
+      <!--android:layout_height="wrap_content"-->
+      <!--android:onClick="helpButtonClicked"-->
+      <!--android:layout_toLeftOf="@id/strut"-->
+      <!--android:text="Help" android:layout_alignParentBottom="true" android:layout_alignParentLeft="true"-->
+      <!--style="@style/roundButtonStyle"/>-->
 
   <Button
       android:id="@+id/aboutButton"
@@ -38,19 +38,18 @@
       android:layout_height="wrap_content"
       android:layout_toLeftOf="@id/strut"
       android:onClick="reinstallShortcutsButtonClicked"
-      android:layout_above="@id/helpButton"
-      android:text="Reinstall shortcuts" android:layout_alignParentBottom="false" android:layout_alignParentLeft="true"
+      android:text="Reinstall shortcuts" android:layout_alignParentBottom="true" android:layout_alignParentLeft="true"
       style="@style/roundButtonStyle"/>
 
   <Button
       android:id="@+id/addButton"
-      android:layout_width="wrap_content"
+      android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:layout_toRightOf="@id/strut"
       android:onClick="addTemplateButtonClicked"
-      android:layout_above="@id/aboutButton"
-      android:text="@string/addTemplate" android:layout_alignParentBottom="false" android:layout_alignParentRight="true"
-      style="@style/roundButtonStyle" android:layout_alignTop="@+id/reinstallShortcutsButton"/>
+      android:layout_above="@id/reinstallShortcutsButton"
+      android:text="@string/addTemplate" android:layout_alignParentBottom="false" android:layout_alignParentRight="false"
+      style="@style/roundButtonStyle"/>
+  <!--android:layout_alignTop="@+id/reinstallShortcutsButton"/>-->
 
   <CheckBox
       android:id="@+id/confirmationCheckbox"
