@@ -16,6 +16,22 @@ android {
     compileSdkVersion 19
     buildToolsVersion '19.0.1'
 
+    signingConfigs {
+        debug {
+//            storeFile file("debug.keystore")
+
+        }
+
+        myConfig {
+
+            storeFile file("/Users/bbyte/androidkeystore")
+            storePassword "123456"
+            keyAlias "default"
+            keyPassword "123456"
+
+        }
+    }
+
     defaultConfig {
         minSdkVersion 14
         targetSdkVersion 19
@@ -24,6 +40,8 @@ android {
     }
     buildTypes {
         release {
+
+            signingConfig signingConfigs.myConfig
             runProguard false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
